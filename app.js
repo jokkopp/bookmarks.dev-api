@@ -10,6 +10,8 @@ const versionRouter = require('./routes/version');
 const usersRouter = require('./routes/users/users');
 const adminRouter = require('./routes/admin/admin');
 const publicBookmarksRouter = require('./routes/public-bookmarks');
+const AppError = require('./models/error');
+const MyError = require('./models/myerror');
 
 const fs = require('fs-extra');
 const rfs = require('rotating-file-stream');
@@ -30,7 +32,8 @@ const mongoPort= process.env.MONGODB_PORT || '27017';
 
 const mongooseConnectOptions = {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
+  useFindAndModify: false
 };
 
 const mongoUrl = `mongodb://${mongoUserName}:${mongoUserPwd}@${mongoHost}:${mongoPort}/${mongoBookmarksCollectionName}`;
@@ -100,12 +103,21 @@ if (app.get('env') === 'development') {
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function(err, req, res) {
-  res.status(err.status || HttpStatus.INTERNAL_SERVER_ERROR);
-  res.render({
-    message: err.message,
-    error: {}
-  });
+app.use(function(err, req, res, next) {
+  if (res.headersSent) {
+    return next(err)
+  }
+  if(err instanceof MyError) {
+    res.status(err.httpStatus);
+    return res.send(err);
+  } else {
+    res.status(err.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    res.send({
+      message: err.message,
+      error: {}
+    });
+  }
+
 });
 
 module.exports = app;

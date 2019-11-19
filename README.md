@@ -58,6 +58,9 @@ This will start the API with [nodemon](http://nodemon.io) and will watch for cod
 > To be able to automatically add youtube videos published date and duration to the title you need to 
 create a _nodemon.json_ file based on the [nodemon.json.example](nodemon.json.example) and a real youtube api key
 
+#### Get Keycloak access token via API call
+To get a keycloak access token via API call see [Get Access Token from Keycloak via API call](docs/keycloak/get-access-token.md)
+
 ## Testing
 
 ### Integration tests
@@ -108,6 +111,10 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+
+
+
+## Appendix
 
 
 

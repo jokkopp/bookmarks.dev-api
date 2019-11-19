@@ -6,7 +6,10 @@ const Keycloak = require('keycloak-connect');
 
 const User = require('../../models/user');
 const Bookmark = require('../../models/bookmark');
-const MyError = require('../../models/error');
+const AppError = require('../../models/error');
+const userIdTokenValidator = require('../../common/userId-token.validator');
+const AsyncWrapper = require('../../common/async-wrapper');
+
 
 const common = require('../../common/config');
 const config = common.config();
@@ -19,39 +22,35 @@ usersRouter.use(keycloak.middleware());
 
 usersRouter.use('/:userId/bookmarks', personalBookmarksRouter);
 
+function wrapAsync(fn) {
+  return function (req, res, next) {
+    // Make sure to `.catch()` any errors and pass them along to the `next()`
+    // middleware in the chain, in this case the error handler.
+    fn(req, res, next).catch(next);
+  };
+}
+
 
 /* GET personal bookmarks of the users */
-usersRouter.get('/:userId', keycloak.protect(), async (request, response) => {
-  try {
-    let userId = request.kauth.grant.access_token.content.sub;
-    if ( userId !== request.params.userId ) {
-      return response
-        .status(HttpStatus.UNAUTHORIZED)
-        .send(new MyError('Unauthorized', ['the userId does not match the subject in the access token']));
-    }
+usersRouter.get('/:userId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
+  userIdTokenValidator.validateUserIdInToken(request);
 
-    const userData = await User.findOne({
-      userId: request.params.userId
-    });
+  const userData = await User.findOne({
+    userId: request.params.userId
+  });
 
-    if ( !userData ) {
-      return response
-        .status(HttpStatus.NOT_FOUND)
-        .send(new MyError(
-          'User data was not found',
-          ['User data of the user with the userId ' + request.params.userId + ' was not found']
-          )
-        );
-    } else {
-      response.status(HttpStatus.OK).json(userData);
-    }
-
-  } catch (err) {
+  if ( !userData ) {
     return response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(err);
+      .status(HttpStatus.NOT_FOUND)
+      .send(new AppError(
+        'User data was not found',
+        ['User data of the user with the userId ' + request.params.userId + ' was not found']
+        )
+      );
+  } else {
+    return response.status(HttpStatus.OK).json(userData);
   }
-});
+}));
 
 /* GET list of bookmarks to be read later for the user */
 usersRouter.get('/:userId/later-reads', keycloak.protect(), async (request, response) => {
@@ -60,7 +59,7 @@ usersRouter.get('/:userId/later-reads', keycloak.protect(), async (request, resp
     if ( userId !== request.params.userId ) {
       return response
         .status(HttpStatus.UNAUTHORIZED)
-        .send(new MyError('Unauthorized', ['the userId does not match the subject in the access token']));
+        .send(new AppError('Unauthorized', ['the userId does not match the subject in the access token']));
     }
 
     const userData = await User.findOne({
@@ -69,7 +68,7 @@ usersRouter.get('/:userId/later-reads', keycloak.protect(), async (request, resp
     if ( !userData ) {
       return response
         .status(HttpStatus.NOT_FOUND)
-        .send(new MyError(
+        .send(new AppError(
           'User data was not found',
           ['User data of the user with the userId ' + request.params.userId + ' was not found']
           )
@@ -93,7 +92,7 @@ usersRouter.get('/:userId/likes', keycloak.protect(), async (request, response) 
     if ( userId !== request.params.userId ) {
       return response
         .status(HttpStatus.UNAUTHORIZED)
-        .send(new MyError('Unauthorized', ['the userId does not match the subject in the access token']));
+        .send(new AppError('Unauthorized', ['the userId does not match the subject in the access token']));
     }
 
     const userData = await User.findOne({
@@ -102,7 +101,7 @@ usersRouter.get('/:userId/likes', keycloak.protect(), async (request, response) 
     if ( !userData ) {
       return response
         .status(HttpStatus.NOT_FOUND)
-        .send(new MyError(
+        .send(new AppError(
           'User data was not found',
           ['User data of the user with the userId ' + request.params.userId + ' was not found']
           )
@@ -126,7 +125,7 @@ usersRouter.get('/:userId/watched-tags', keycloak.protect(), async (request, res
     if ( userId !== request.params.userId ) {
       return response
         .status(HttpStatus.UNAUTHORIZED)
-        .send(new MyError('Unauthorized', ['the userId does not match the subject in the access token']));
+        .send(new AppError('Unauthorized', ['the userId does not match the subject in the access token']));
     }
 
     const userData = await User.findOne({
@@ -135,7 +134,7 @@ usersRouter.get('/:userId/watched-tags', keycloak.protect(), async (request, res
     if ( !userData ) {
       return response
         .status(HttpStatus.NOT_FOUND)
-        .send(new MyError(
+        .send(new AppError(
           'User data was not found',
           ['User data of the user with the userId ' + request.params.userId + ' was not found']
           )
@@ -166,7 +165,7 @@ usersRouter.get('/:userId/pinned', keycloak.protect(), async (request, response)
     if ( userId !== request.params.userId ) {
       return response
         .status(HttpStatus.UNAUTHORIZED)
-        .send(new MyError('Unauthorized', ['the userId does not match the subject in the access token']));
+        .send(new AppError('Unauthorized', ['the userId does not match the subject in the access token']));
     }
 
     const userData = await User.findOne({
@@ -175,7 +174,7 @@ usersRouter.get('/:userId/pinned', keycloak.protect(), async (request, response)
     if ( !userData ) {
       return response
         .status(HttpStatus.NOT_FOUND)
-        .send(new MyError(
+        .send(new AppError(
           'User data was not found',
           ['User data of the user with the userId ' + request.params.userId + ' was not found']
           )
@@ -204,7 +203,7 @@ usersRouter.get('/:userId/favorites', keycloak.protect(), async (request, respon
     if ( userId !== request.params.userId ) {
       return response
         .status(HttpStatus.UNAUTHORIZED)
-        .send(new MyError('Unauthorized', ['the userId does not match the subject in the access token']));
+        .send(new AppError('Unauthorized', ['the userId does not match the subject in the access token']));
     }
 
     const userData = await User.findOne({
@@ -213,7 +212,7 @@ usersRouter.get('/:userId/favorites', keycloak.protect(), async (request, respon
     if ( !userData ) {
       return response
         .status(HttpStatus.NOT_FOUND)
-        .send(new MyError(
+        .send(new AppError(
           'User data was not found',
           ['User data of the user with the userId ' + request.params.userId + ' was not found']
           )
@@ -242,7 +241,7 @@ usersRouter.get('/:userId/history', keycloak.protect(), async (request, response
     if ( userId !== request.params.userId ) {
       return response
         .status(HttpStatus.UNAUTHORIZED)
-        .send(new MyError('Unauthorized', ['the userId does not match the subject in the access token']));
+        .send(new AppError('Unauthorized', ['the userId does not match the subject in the access token']));
     }
 
     const userData = await User.findOne({
@@ -251,7 +250,7 @@ usersRouter.get('/:userId/history', keycloak.protect(), async (request, response
     if ( !userData ) {
       return response
         .status(HttpStatus.NOT_FOUND)
-        .send(new MyError(
+        .send(new AppError(
           'User data was not found',
           ['User data of the user with the userId ' + request.params.userId + ' was not found']
           )
@@ -287,21 +286,21 @@ usersRouter.post('/:userId', keycloak.protect(), async (request, response) => {
     if ( userIdIsInconsistentInPathAndAccessToken ) {
       return response
         .status(HttpStatus.UNAUTHORIZED)
-        .send(new MyError('Unauthorized', ['the userId does not match the subject in the access token']));
+        .send(new AppError('Unauthorized', ['the userId does not match the subject in the access token']));
     }
 
     const invalidUserIdInRequestBody = !request.body.userId || request.body.userId != userId;
     if ( invalidUserIdInRequestBody ) {
       return response
         .status(HttpStatus.BAD_REQUEST)
-        .send(new MyError('Missing or invalid userId in the request body',
+        .send(new AppError('Missing or invalid userId in the request body',
           ['the userId must be consistent across path, body and access token']));
     }
 
     if ( !userSearchesAreValid(request) ) {
       return response
         .status(HttpStatus.BAD_REQUEST)
-        .send(new MyError('Searches are not valid',
+        .send(new AppError('Searches are not valid',
           ['Searches are not valid - search text is required']));
     }
 
@@ -340,21 +339,21 @@ usersRouter.put('/:userId', keycloak.protect(), async (request, response) => {
     if ( userIdIsInconsistentInPathAndAccessToken ) {
       return response
         .status(HttpStatus.UNAUTHORIZED)
-        .send(new MyError('Unauthorized', ['the userId does not match the subject in the access token']));
+        .send(new AppError('Unauthorized', ['the userId does not match the subject in the access token']));
     }
 
     const invalidUserIdInRequestBody = !request.body.userId || request.body.userId != userId;
     if ( invalidUserIdInRequestBody ) {
       return response
         .status(HttpStatus.BAD_REQUEST)
-        .send(new MyError('Missing or invalid userId in the request body',
+        .send(new AppError('Missing or invalid userId in the request body',
           ['the userId must be consistent across path, body and access token']));
     }
 
     if ( !userSearchesAreValid(request) ) {
       return response
         .status(HttpStatus.BAD_REQUEST)
-        .send(new MyError('Searches are not valid',
+        .send(new AppError('Searches are not valid',
           ['Searches are not valid - search text is required']));
     }
 
@@ -406,7 +405,7 @@ usersRouter.delete('/:userId', keycloak.protect(), async (request, response) => 
   if ( userId !== request.params.userId ) {
     return response
       .status(HttpStatus.UNAUTHORIZED)
-      .send(new MyError('Unauthorized', ['the userId does not match the subject in the access token']));
+      .send(new AppError('Unauthorized', ['the userId does not match the subject in the access token']));
   }
 
   try {
@@ -417,7 +416,7 @@ usersRouter.delete('/:userId', keycloak.protect(), async (request, response) => 
     if ( !userData ) {
       return response
         .status(HttpStatus.NOT_FOUND)
-        .send(new MyError(
+        .send(new AppError(
           'Not Found Error',
           ['User Data for user id was not found']
           )
@@ -428,7 +427,7 @@ usersRouter.delete('/:userId', keycloak.protect(), async (request, response) => 
   } catch (err) {
     return response
       .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(new MyError('Unknown server error',
+      .send(new AppError('Unknown server error',
         ['Unknown server error when trying to delete user with id ' + request.params.userId]));
   }
 });
@@ -442,17 +441,17 @@ usersRouter.patch('/:userId/bookmarks/likes/:bookmarkId', keycloak.protect(), as
   if ( userId !== request.params.userId ) {
     return response
       .status(HttpStatus.UNAUTHORIZED)
-      .send(new MyError('Unauthorized', ['the userId does not match the subject in the access token']));
+      .send(new AppError('Unauthorized', ['the userId does not match the subject in the access token']));
   }
 
   if ( userId !== request.body.ratingUserId ) {
-    return response.status(HttpStatus.UNAUTHORIZED).send(new MyError('Invalid userId', ['The id from the access token must match the one from the request']));
+    return response.status(HttpStatus.UNAUTHORIZED).send(new AppError('Invalid userId', ['The id from the access token must match the one from the request']));
   }
   const requiredAttributesMissing = !request.body.action || !request.body.ratingUserId;
   if ( requiredAttributesMissing ) {
     return response
       .status(HttpStatus.BAD_REQUEST)
-      .send(new MyError('Missing required attributes', ['Missing required attributes']));
+      .send(new AppError('Missing required attributes', ['Missing required attributes']));
   }
 
   try {
@@ -463,7 +462,7 @@ usersRouter.patch('/:userId/bookmarks/likes/:bookmarkId', keycloak.protect(), as
     if ( !userData ) {
       return response
         .status(HttpStatus.NOT_FOUND)
-        .send(new MyError(
+        .send(new AppError(
           'Not Found Error',
           ['User Data for user id was not found']
           )
@@ -471,10 +470,10 @@ usersRouter.patch('/:userId/bookmarks/likes/:bookmarkId', keycloak.protect(), as
     } else {
       if ( request.body.action === 'LIKE' ) {
         try {
-          if (userData.likes.includes(request.params.bookmarkId)) {
+          if ( userData.likes.includes(request.params.bookmarkId) ) {
             return response
               .status(HttpStatus.BAD_REQUEST)
-              .send(new MyError('You already starred this bookmark', ['You already starred this bookmark']));
+              .send(new AppError('You already starred this bookmark', ['You already starred this bookmark']));
           } else {
 
             await User.update(
@@ -488,7 +487,7 @@ usersRouter.patch('/:userId/bookmarks/likes/:bookmarkId', keycloak.protect(), as
             if ( bookmarkNotFound ) {
               return response
                 .status(HttpStatus.NOT_FOUND)
-                .send(new MyError('Not Found Error', ['Bookmark with bookmark id ' + request.params.bookmarkId + ' not found']));
+                .send(new AppError('Not Found Error', ['Bookmark with bookmark id ' + request.params.bookmarkId + ' not found']));
             } else {
               response
                 .status(HttpStatus.OK)
@@ -497,14 +496,14 @@ usersRouter.patch('/:userId/bookmarks/likes/:bookmarkId', keycloak.protect(), as
           }
 
         } catch (err) {
-          return response.status(HttpStatus.INTERNAL_SERVER_ERROR).send(new MyError('Unknown Server Error', ['Unknow server error when starring bookmark with id ' + request.params.bookmarkId]));
+          return response.status(HttpStatus.INTERNAL_SERVER_ERROR).send(new AppError('Unknown Server Error', ['Unknow server error when starring bookmark with id ' + request.params.bookmarkId]));
         }
       } else if ( request.body.action === 'UNLIKE' ) {
         try {
-          if (!userData.likes.includes(request.params.bookmarkId)) {
+          if ( !userData.likes.includes(request.params.bookmarkId) ) {
             return response
               .status(HttpStatus.BAD_REQUEST)
-              .send(new MyError('You did not like this bookmark', ['You did not like this bookmark']));
+              .send(new AppError('You did not like this bookmark', ['You did not like this bookmark']));
           } else {
 
             await User.update(
@@ -517,7 +516,7 @@ usersRouter.patch('/:userId/bookmarks/likes/:bookmarkId', keycloak.protect(), as
             if ( bookmarkNotFound ) {
               return response
                 .status(HttpStatus.NOT_FOUND)
-                .send(new MyError('Not Found Error', ['Bookmark with bookmark id ' + request.params.bookmarkId + ' not found']));
+                .send(new AppError('Not Found Error', ['Bookmark with bookmark id ' + request.params.bookmarkId + ' not found']));
             } else {
               response
                 .status(HttpStatus.OK)
@@ -525,18 +524,18 @@ usersRouter.patch('/:userId/bookmarks/likes/:bookmarkId', keycloak.protect(), as
             }
           }
         } catch (err) {
-          return response.status(HttpStatus.INTERNAL_SERVER_ERROR).send(new MyError('Unknown Server Error', ['Unknow server error when unstarring bookmark with id ' + request.params.bookmarkId]));
+          return response.status(HttpStatus.INTERNAL_SERVER_ERROR).send(new AppError('Unknown Server Error', ['Unknow server error when unstarring bookmark with id ' + request.params.bookmarkId]));
         }
       } else {
         return response
           .status(HttpStatus.BAD_REQUEST)
-          .send(new MyError('Rating action should be either LIKE or UNLIKE', ['Rating action should be either STAR or UNSTAR']));
+          .send(new AppError('Rating action should be either LIKE or UNLIKE', ['Rating action should be either STAR or UNSTAR']));
       }
     }
   } catch (err) {
     return response
       .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(new MyError('Unknown server error',
+      .send(new AppError('Unknown server error',
         ['Unknown server error when trying to delete user with id ' + request.params.userId]));
   }
 });

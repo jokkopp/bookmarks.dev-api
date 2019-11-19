@@ -1,12 +1,21 @@
 const app = require('../../app');
 const chai = require('chai');
+const chaiAsPromised = require("chai-as-promised");
+
+chai.use(chaiAsPromised);
+
 const request = require('supertest');
 const HttpStatus = require('http-status-codes');
 const expect = chai.expect;
+chai.should();
+
+const AsyncWrapper = require('../../common/async-wrapper');
 const jwt = require('jsonwebtoken');
 
 const common = require('../../common/config');
 const config = common.config();
+const AppError = require('../../models/error');
+const MyError = require('../../models/myerror');
 
 const superagent = require('superagent');
 
@@ -17,30 +26,34 @@ const baseApiUrlUnderTest = '/api/personal/users/';
 
 let bookmarkExample;
 
-before(async function () {
-  try {
-    const userBearerTokenResponse = await
-      superagent
-        .post(config.integration_tests.token_endpoint)
-        .send('client_id=' + config.integration_tests.client_id)
-        .send('client_secret=' + config.integration_tests.client_secret)
-        .send('grant_type=client_credentials')
-        .set('Accept', 'application/json');
 
-    const accessToken = userBearerTokenResponse.body.access_token;
-    bearerToken = 'Bearer ' + accessToken;
-    const decoded = jwt.decode(accessToken);
-    testUserId = decoded.sub;
-    bookmarkExample = {
-      "name": "Cleaner code in NodeJs with async-await - Mongoose calls example – CodingpediaOrg",
+describe('Personal Bookmarks tests', function () {
+
+
+  before(async function () {
+    try {
+      const userBearerTokenResponse = await
+        superagent
+          .post(config.integration_tests.token_endpoint)
+          .send('client_id=' + config.integration_tests.client_id)
+          .send('client_secret=' + config.integration_tests.client_secret)
+          .send('grant_type=client_credentials')
+          .set('Accept', 'application/json');
+
+      const accessToken = userBearerTokenResponse.body.access_token;
+      bearerToken = 'Bearer ' + accessToken;
+      const decoded = jwt.decode(accessToken);
+      testUserId = decoded.sub;
+      bookmarkExample = {
+        "name": "Cleaner code in NodeJs with async-await - Mongoose calls example – CodingpediaOrg",
         "location": "http://www.codingpedia.org/ama/cleaner-code-in-nodejs-with-async-await-mongoose-calls-example",
         "language": "en",
         "tags": [
-        "nodejs",
-        "async-await",
-        "mongoose",
-        "mongodb"
-      ],
+          "nodejs",
+          "async-await",
+          "mongoose",
+          "mongodb"
+        ],
         "publishedOn": "2017-11-05",
         "githubURL": "https://github.com/Codingpedia/bookmarks-api",
         "description": "Example showing migration of Mongoose calls from previously using callbacks to using the new async-await feature in NodeJs",
@@ -50,36 +63,54 @@ before(async function () {
         "starredBy": [],
         "likes": 0,
         "lastAccessedAt": null
+      }
+
+    } catch (err) {
+      console.error('Error when getting user bearer token', err)
     }
 
-  } catch (err) {
-    console.error('Error when getting user bearer token', err)
-  }
-
-});
-
-describe('Personal Bookmarks tests', function () {
+  });
 
   describe('invalid user id calls', function () {
-    it('should fail trying to GET bookmarks with false user id', function (done) {
-      request(app)
-        .get(baseApiUrlUnderTest + 'false_user_id/bookmarks')
-        .set('Authorization', bearerToken)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.UNAUTHORIZED);
-          done();
+    it('should fail trying to GET bookmarks with false user id',async () => {
+/*      try {
+        const response = await request(app)
+          .get(baseApiUrlUnderTest + 'false_user_id/bookmarks')
+          .set('Authorization', bearerToken);
+      } catch (e) {
+        console.log(e);
+        expect(e.httpStatus).to.equal(HttpStatus.CREATED);
+      }*/
+
+      //expect(error).to.be.an(AppError);
+      await (
+        request(app)
+          .get(baseApiUrlUnderTest + 'false_user_id/bookmarks')
+          .set('Authorization', bearerToken)
+      ).should.eventually.be.rejectedWith(MyError)
+        .then((error) => {
+          expect(error).to.have.property('httpStatus', 401);
+          expect(error).to.have.property('title', 'Unauthorized');
+          console.log(error);
         });
     });
 
-    it('should fail trying CREATE bookmark with invalid user id', function (done) {
-      request(app)
-        .post(baseApiUrlUnderTest + 'false_user_id/bookmarks')
-        .set('Authorization', bearerToken)
-        .send(bookmarkExample)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.UNAUTHORIZED);
-          done();
-        });
+    it('should fail trying CREATE bookmark with invalid user id', async function () {
+      await expect(async () => {
+        request(app)
+          .post(baseApiUrlUnderTest + 'false_user_id/bookmarks')
+          .set('Authorization', bearerToken)
+          .send(bookmarkExample)
+      }).to.eventually.be.rejectedWith(AppError);
+      console.log('I am here');
+      /*      request(app)
+              .post(baseApiUrlUnderTest + 'false_user_id/bookmarks')
+              .set('Authorization', bearerToken)
+              .send(bookmarkExample)
+              .end(function (error, response) {
+                expect(response.statusCode).to.equal(HttpStatus.UNAUTHORIZED);
+                done();
+              });*/
     });
 
     it('should fail trying to UPDATE bookmark with invalid user id', function (done) {
@@ -179,7 +210,7 @@ describe('Personal Bookmarks tests', function () {
       let invalidBookmark = JSON.parse(JSON.stringify(bookmarkExample));
       const textSnippet = "long text in the making";
       let longText = textSnippet;
-      for (var i = 0; i < 100; i++) {
+      for ( var i = 0; i < 100; i++ ) {
         longText += textSnippet;
       }
       invalidBookmark.description = longText;
@@ -199,7 +230,7 @@ describe('Personal Bookmarks tests', function () {
       let invalidBookmark = JSON.parse(JSON.stringify(bookmarkExample));
       const line = "oneline\n";
       let longText = line;
-      for (var i = 0; i < 101; i++) {
+      for ( var i = 0; i < 101; i++ ) {
         longText += line;
       }
       invalidBookmark.description = longText;
@@ -254,7 +285,7 @@ describe('Personal Bookmarks tests', function () {
         .set('Authorization', bearerToken)
         .send(bookmarkExample)
         .end(function (error, response) {
-          if (error) {
+          if ( error ) {
             return done(error);
           }
           expect(response.statusCode).to.equal(HttpStatus.CREATED);
@@ -270,7 +301,7 @@ describe('Personal Bookmarks tests', function () {
             .get(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${bookmarkId}`)
             .set('Authorization', bearerToken)
             .end(function (error, response) {
-              if (error) {
+              if ( error ) {
                 return done(error);
               }
               expect(response.statusCode).to.equal(HttpStatus.OK);
@@ -291,7 +322,7 @@ describe('Personal Bookmarks tests', function () {
         .set('Authorization', bearerToken)
         .send(bookmarkExample)
         .end(function (error, response) {
-          if (error) {
+          if ( error ) {
             return done(error);
           }
           expect(response.statusCode).to.equal(HttpStatus.CONFLICT);
@@ -375,7 +406,7 @@ describe('Personal Bookmarks tests', function () {
         let invalidBookmark = JSON.parse(JSON.stringify(createdBookmark));
         const textSnippet = "long text in the making";
         let longText = textSnippet;
-        for (var i = 0; i < 100; i++) {
+        for ( var i = 0; i < 100; i++ ) {
           longText += textSnippet;
         }
         invalidBookmark.description = longText;
@@ -395,7 +426,7 @@ describe('Personal Bookmarks tests', function () {
         let invalidBookmark = JSON.parse(JSON.stringify(createdBookmark));
         const line = "oneline\n";
         let longText = line;
-        for (var i = 0; i < 101; i++) {
+        for ( var i = 0; i < 101; i++ ) {
           longText += line;
         }
         invalidBookmark.description = longText;
@@ -430,7 +461,7 @@ describe('Personal Bookmarks tests', function () {
             .get(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${updatedBookmark._id}`)
             .set('Authorization', bearerToken)
             .end(function (error, response) {
-              if (error) {
+              if ( error ) {
                 return done(error);
               }
               expect(response.statusCode).to.equal(HttpStatus.OK);
@@ -446,7 +477,7 @@ describe('Personal Bookmarks tests', function () {
         .delete(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${createdBookmark._id}`)
         .set('Authorization', bearerToken)
         .end(function (error, response) {
-          if (error) {
+          if ( error ) {
             return done(error);
           }
           expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
@@ -467,7 +498,7 @@ describe('Personal Bookmarks tests', function () {
     const verySpecialTag = "very-special-tag-personal-bookmarks";
     const verySpecialSourceCodeUrl = "https://very-special-github-url.com/personal-bookmarks-search";
 
-    before(async  function(){
+    before(async function () {
 
       basePathApiPersonalUsersBookmarks = '/api/personal/users/' + testUserId + '/bookmarks/'; //it has to be initialised here otherwiese "testUserId" is undefined, variables are called
       bookmarkExample = {
@@ -497,7 +528,7 @@ describe('Personal Bookmarks tests', function () {
           .set('Authorization', bearerToken)
           .send(bookmarkExample);
 
-        if(response.statusCode !== HttpStatus.CREATED) {
+        if ( response.statusCode !== HttpStatus.CREATED ) {
           throw new Error("Sample bookmark not properly created");
         }
         const locationHeaderValue = response.header['location']
@@ -526,13 +557,13 @@ describe('Personal Bookmarks tests', function () {
         .set('Authorization', bearerToken)
         .send(userData);
 
-      if(createUserDataResponse.statusCode !== HttpStatus.CREATED) {
+      if ( createUserDataResponse.statusCode !== HttpStatus.CREATED ) {
         throw new Error("Sample bookmark not properly created");
       }
 
     });
 
-    after(async function(){
+    after(async function () {
       await request(app)
         .delete(`${basePathApiPersonalUsersBookmarks}/${createdBookmarkId}`)
         .set('Authorization', bearerToken);
