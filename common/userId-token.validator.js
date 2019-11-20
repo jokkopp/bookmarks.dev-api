@@ -1,13 +1,9 @@
-const AppError = require('../models/error');
-const MyError = require('../models/myerror');
-const HttpStatus = require('http-status-codes');
+const UseridTokenValidationError = require('../models/userid-token-validation.error');
 
 let validateUserIdInToken = function (request) {
   const userId = request.kauth.grant.access_token.content.sub;
   if ( userId !== request.params.userId ) {
-    //next(new AppError(HttpStatus.UNAUTHORIZED, 'Unauthorized', ['the userId does not match the subject in the access token']));
-    throw new MyError(HttpStatus.UNAUTHORIZED, 'Unauthorized', ['the userId does not match the subject in the access token']);
-    //throw new AppError(HttpStatus.UNAUTHORIZED, 'Unauthorized', ['the userId does not match the subject in the access token']);
+    throw new UseridTokenValidationError('the userId does not match the subject in the access token');
   }
 }
 

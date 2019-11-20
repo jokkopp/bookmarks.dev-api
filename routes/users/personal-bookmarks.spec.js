@@ -73,26 +73,12 @@ describe('Personal Bookmarks tests', function () {
 
   describe('invalid user id calls', function () {
     it('should fail trying to GET bookmarks with false user id',async () => {
-/*      try {
         const response = await request(app)
           .get(baseApiUrlUnderTest + 'false_user_id/bookmarks')
           .set('Authorization', bearerToken);
-      } catch (e) {
-        console.log(e);
-        expect(e.httpStatus).to.equal(HttpStatus.CREATED);
-      }*/
 
-      //expect(error).to.be.an(AppError);
-      await (
-        request(app)
-          .get(baseApiUrlUnderTest + 'false_user_id/bookmarks')
-          .set('Authorization', bearerToken)
-      ).should.eventually.be.rejectedWith(MyError)
-        .then((error) => {
-          expect(error).to.have.property('httpStatus', 401);
-          expect(error).to.have.property('title', 'Unauthorized');
-          console.log(error);
-        });
+        expect(response.status).to.equal(HttpStatus.UNAUTHORIZED)
+        console.log(response);
     });
 
     it('should fail trying CREATE bookmark with invalid user id', async function () {
