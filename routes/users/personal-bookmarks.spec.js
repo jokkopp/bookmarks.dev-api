@@ -485,6 +485,12 @@ describe('Personal Bookmarks tests', function () {
       }
 
       try {
+
+        await request(app)
+          .delete(basePathApiPersonalUsersBookmarks)
+          .query({'location': verySpecialLocation})
+          .set('Authorization', bearerToken);
+
         const response = await request(app)
           .post(basePathApiPersonalUsersBookmarks)
           .set('Authorization', bearerToken)

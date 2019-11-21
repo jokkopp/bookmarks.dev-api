@@ -22,15 +22,6 @@ usersRouter.use(keycloak.middleware());
 
 usersRouter.use('/:userId/bookmarks', personalBookmarksRouter);
 
-function wrapAsync(fn) {
-  return function (req, res, next) {
-    // Make sure to `.catch()` any errors and pass them along to the `next()`
-    // middleware in the chain, in this case the error handler.
-    fn(req, res, next).catch(next);
-  };
-}
-
-
 /* GET personal bookmarks of the users */
 usersRouter.get('/:userId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
   userIdTokenValidator.validateUserId(request);
@@ -250,10 +241,11 @@ usersRouter.get('/:userId/history', keycloak.protect(), async (request, response
 * create user details
 * */
 usersRouter.post('/:userId', keycloak.protect(), async (request, response) => {
-  userIdTokenValidator.validateUserId(request);
-  try {
 
-    const invalidUserIdInRequestBody = !request.body.userId || request.body.userId != userId;
+  userIdTokenValidator.validateUserId(request);
+
+  try {
+    const invalidUserIdInRequestBody = !request.body.userId || request.body.userId !== request.params.userId;
     if ( invalidUserIdInRequestBody ) {
       return response
         .status(HttpStatus.BAD_REQUEST)
@@ -295,10 +287,12 @@ usersRouter.post('/:userId', keycloak.protect(), async (request, response) => {
 *
 * */
 usersRouter.put('/:userId', keycloak.protect(), async (request, response) => {
+
   userIdTokenValidator.validateUserId(request);
+
   try {
 
-    const invalidUserIdInRequestBody = !request.body.userId || request.body.userId != userId;
+    const invalidUserIdInRequestBody = !request.body.userId || request.body.userId != request.params.userId;
     if ( invalidUserIdInRequestBody ) {
       return response
         .status(HttpStatus.BAD_REQUEST)

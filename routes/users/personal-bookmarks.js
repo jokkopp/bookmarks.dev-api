@@ -362,4 +362,39 @@ personalBookmarksRouter.delete('/:bookmarkId', keycloak.protect(), AsyncWrapper.
   }
 }));
 
+/*
+* DELETE bookmark for user by location
+*/
+personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
+
+  UserIdValidator.validateIsAdminOrUserId(request);
+
+  const location = request.query.location;
+  try {
+    const bookmark = await Bookmark.findOneAndRemove({
+      location: location,
+      userId: request.params.userId
+    });
+
+    if (!bookmark) {
+      return response
+        .status(HttpStatus.NOT_FOUND)
+        .send(new AppError(
+          HttpStatus.NOT_FOUND,
+          'Not Found Error',
+          ['Bookmark NOT_FOUND for user id ' + request.params.userId + ' and location ' + bookmarkId]
+          )
+        );
+    }
+
+    return response.status(HttpStatus.NO_CONTENT).send();
+
+  } catch (err) {
+    return response
+      .status(HttpStatus.INTERNAL_SERVER_ERROR)
+      .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown server error',
+        ['Unknown server error when trying to delete bookmark with id ' + bookmarkId]));
+  }
+}));
+
 module.exports = personalBookmarksRouter;

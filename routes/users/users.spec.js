@@ -103,20 +103,18 @@ describe('User Data tests', function () {
       });
   });
 
-  it('should successfully CREATE example user without searches', function (done) {
+  it('should successfully CREATE example user without searches', async function () {
     let newUser = JSON.parse(JSON.stringify(userExample));
     newUser.searches = [];
 
-    request(app)
+    const response = await request(app)
       .put(`${baseApiUrlUnderTest}/${testUserId}`)
       .set('Authorization', bearerToken)
-      .send(newUser)
-      .end(function (error, response) {
-        expect(response.statusCode).to.equal(HttpStatus.OK);
-        expect(response.body.userId).to.equal(testUserId);
-        expect(response.body.searches.length).to.equal(0);
-        done();
-      });
+      .send(newUser);
+
+    expect(response.statusCode).to.equal(HttpStatus.OK);
+    expect(response.body.userId).to.equal(testUserId);
+    expect(response.body.searches.length).to.equal(0);
   });
 
   it('should fail trying to UPDATE example user with invalid searches', function (done) {

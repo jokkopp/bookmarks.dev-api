@@ -45,10 +45,10 @@ describe('Public API Tests', function () {
 
     const basePathApiPublicBookmarks = '/api/public/bookmarks/';
 
-    const verySpecialTitle = "very special title very-special-java-title";
+    const verySpecialTitle = "very special title very-special-java-title - public";
     const verySpecialLocation = "http://www.very-special-url.com/public-api-tests";
-    const verySpecialTag = "very-special-tag";
-    const verySpecialSourceCodeUrl = "https://very-special-github-url.com";
+    const verySpecialTag = "very-special-tag-public";
+    const verySpecialSourceCodeUrl = "https://very-special-github-url.com/public-api-tests";
     let bookmarkExample;
 
     before(async function () {
@@ -88,6 +88,11 @@ describe('Public API Tests', function () {
         }
 
         try {
+          const deleteBookmarkResponse = await request(app)
+            .delete(`${basePathApiPersonalUsers}${testUserId}/bookmarks`)
+            .query({'location': verySpecialLocation})
+            .set('Authorization', bearerToken);
+
           const createBookmarkResponse = await request(app)
             .post(`${basePathApiPersonalUsers}${testUserId}/bookmarks`)
             .set('Authorization', bearerToken)
@@ -144,7 +149,7 @@ describe('Public API Tests', function () {
     it('should find bookmark with with very-special-tag in query param as word', async function () {
       const response = await request(app)
         .get(basePathApiPublicBookmarks)
-        .query({q: "very-special-tag"})
+        .query({q: verySpecialTag})
         .query({limit: 10});
 
       expect(response.statusCode).to.equal(HttpStatus.OK);
