@@ -29,7 +29,6 @@ let bookmarkExample;
 
 describe('Personal Bookmarks tests', function () {
 
-
   before(async function () {
     try {
       const userBearerTokenResponse = await
@@ -72,191 +71,168 @@ describe('Personal Bookmarks tests', function () {
   });
 
   describe('invalid user id calls', function () {
-    it('should fail trying to GET bookmarks with false user id',async () => {
-        const response = await request(app)
-          .get(baseApiUrlUnderTest + 'false_user_id/bookmarks')
-          .set('Authorization', bearerToken);
+    it('should fail trying to GET bookmarks with false user id', async function () {
+      const response = await request(app)
+        .get(baseApiUrlUnderTest + 'invalid_user_id/bookmarks')
+        .set('Authorization', bearerToken);
 
-        expect(response.status).to.equal(HttpStatus.UNAUTHORIZED)
-        console.log(response);
+      expect(response.status).to.equal(HttpStatus.UNAUTHORIZED);
     });
 
     it('should fail trying CREATE bookmark with invalid user id', async function () {
-      await expect(async () => {
-        request(app)
-          .post(baseApiUrlUnderTest + 'false_user_id/bookmarks')
-          .set('Authorization', bearerToken)
-          .send(bookmarkExample)
-      }).to.eventually.be.rejectedWith(AppError);
-      console.log('I am here');
-      /*      request(app)
-              .post(baseApiUrlUnderTest + 'false_user_id/bookmarks')
-              .set('Authorization', bearerToken)
-              .send(bookmarkExample)
-              .end(function (error, response) {
-                expect(response.statusCode).to.equal(HttpStatus.UNAUTHORIZED);
-                done();
-              });*/
+
+      const response = await request(app)
+        .post(baseApiUrlUnderTest + 'invalid_user_id/bookmarks')
+        .set('Authorization', bearerToken)
+        .send(bookmarkExample);
+
+      expect(response.status).to.equal(HttpStatus.UNAUTHORIZED);
+
     });
 
-    it('should fail trying to UPDATE bookmark with invalid user id', function (done) {
-      request(app)
-        .put(baseApiUrlUnderTest + 'false_user_id/bookmarks/1324343')
+    it('should fail trying to UPDATE bookmark with invalid user id', async function () {
+      const response = await request(app)
+        .put(baseApiUrlUnderTest + 'invalid_user_id/bookmarks/1324343')
         .set('Authorization', bearerToken)
-        .send(bookmarkExample)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.UNAUTHORIZED);
-          done();
-        });
+        .send(bookmarkExample);
+
+      expect(response.status).to.equal(HttpStatus.UNAUTHORIZED);
     });
 
-    it('should fail trying to DELETE bookmark with invalid user id', function (done) {
-      request(app)
-        .delete(baseApiUrlUnderTest + 'false_user_id/bookmarks/12343434')
-        .set('Authorization', bearerToken)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.UNAUTHORIZED);
-          done();
-        });
+    it('should fail trying to DELETE bookmark with invalid user id', async function () {
+      const response = await request(app)
+        .delete(baseApiUrlUnderTest + 'invalid_user_id/bookmarks/12343434')
+        .set('Authorization', bearerToken);
+      expect(response.statusCode).to.equal(HttpStatus.UNAUTHORIZED);
     });
   });
 
   describe('invalid bookmark attributes at CREATION', function () {
-    it('should fail trying to CREATE bookmark without a name', function (done) {
+    it('should fail trying to CREATE bookmark without a name', async function () {
       let invalidBookmark = JSON.parse(JSON.stringify(bookmarkExample));
       invalidBookmark.name = '';
-      request(app)
+
+      const response = await request(app)
         .post(`${baseApiUrlUnderTest}${testUserId}/bookmarks`)
         .set('Authorization', bearerToken)
-        .send(invalidBookmark)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-          expect(response.body.title).to.equal('Missing required attributes');
-          done();
-        });
+        .send(invalidBookmark);
+
+      expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+      expect(response.body.title).to.equal('Missing required attributes');
     });
 
-    it('should fail trying to CREATE bookmark without a location', function (done) {
+    it('should fail trying to CREATE bookmark without a location', async function () {
       let invalidBookmark = JSON.parse(JSON.stringify(bookmarkExample));
       invalidBookmark.location = '';
-      request(app)
+
+      const response = await request(app)
         .post(`${baseApiUrlUnderTest}${testUserId}/bookmarks`)
         .set('Authorization', bearerToken)
-        .send(invalidBookmark)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-          expect(response.body.title).to.equal('Missing required attributes');
-          done();
-        });
+        .send(invalidBookmark);
+
+      expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+      expect(response.body.title).to.equal('Missing required attributes');
     });
 
-    it('should fail trying to CREATE bookmark without tags', function (done) {
+    it('should fail trying to CREATE bookmark without tags', async function () {
       let invalidBookmark = JSON.parse(JSON.stringify(bookmarkExample));
       invalidBookmark.tags = [];
-      request(app)
+
+      const response = await request(app)
         .post(`${baseApiUrlUnderTest}${testUserId}/bookmarks`)
         .set('Authorization', bearerToken)
         .send(invalidBookmark)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-          expect(response.body.title).to.equal('Missing required attributes');
-          done();
-        });
+
+      expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+      expect(response.body.title).to.equal('Missing required attributes');
     });
 
-    it('should fail trying to CREATE bookmark with too many tags', function (done) {
+    it('should fail trying to CREATE bookmark with too many tags', async function () {
       let invalidBookmark = JSON.parse(JSON.stringify(bookmarkExample));
       invalidBookmark.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5', 'tag6', 'tag7', 'tag8', 'tag9'];
-      request(app)
+
+      const response = await request(app)
         .post(`${baseApiUrlUnderTest}${testUserId}/bookmarks`)
         .set('Authorization', bearerToken)
-        .send(invalidBookmark)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-          expect(response.body.title).to.equal('Too many tags have been submitted');
-          done();
-        });
+        .send(invalidBookmark);
+
+      expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+      expect(response.body.title).to.equal('Too many tags have been submitted');
     });
 
-    it('should fail trying to CREATE bookmark with blocked tags', function (done) {
+    it('should fail trying to CREATE bookmark with blocked tags', async function () {
       let invalidBookmark = JSON.parse(JSON.stringify(bookmarkExample));
       invalidBookmark.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'awesome', 'awesome-java'];
-      request(app)
+
+      const response = await request(app)
         .post(`${baseApiUrlUnderTest}${testUserId}/bookmarks`)
         .set('Authorization', bearerToken)
-        .send(invalidBookmark)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-          expect(response.body.title).to.equal('The following tags are blocked: awesome awesome-java');
-          done();
-        });
+        .send(invalidBookmark);
+
+      expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+      expect(response.body.title).to.equal('The following tags are blocked: awesome awesome-java');
     });
 
-    it('should fail trying to CREATE bookmark with a too big description', function (done) {
+    it('should fail trying to CREATE bookmark with a too big description', async function () {
       let invalidBookmark = JSON.parse(JSON.stringify(bookmarkExample));
       const textSnippet = "long text in the making";
       let longText = textSnippet;
-      for ( var i = 0; i < 100; i++ ) {
+      for (var i = 0; i < 100; i++) {
         longText += textSnippet;
       }
       invalidBookmark.description = longText;
 
-      request(app)
+      const response = await request(app)
         .post(`${baseApiUrlUnderTest}${testUserId}/bookmarks`)
         .set('Authorization', bearerToken)
         .send(invalidBookmark)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-          expect(response.body.title).to.contain('The description is too long.');
-          done();
-        });
+
+      expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+      expect(response.body.title).to.contain('The description is too long.');
     });
 
-    it('should fail trying to CREATE bookmark with a description with too many lines', function (done) {
+    it('should fail trying to CREATE bookmark with a description with too many lines', async function () {
       let invalidBookmark = JSON.parse(JSON.stringify(bookmarkExample));
       const line = "oneline\n";
       let longText = line;
-      for ( var i = 0; i < 101; i++ ) {
+      for (var i = 0; i < 101; i++) {
         longText += line;
       }
       invalidBookmark.description = longText;
 
-      request(app)
+      const response = await request(app)
         .post(`${baseApiUrlUnderTest}${testUserId}/bookmarks`)
         .set('Authorization', bearerToken)
-        .send(invalidBookmark)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-          expect(response.body.title).to.contain('The description hast too many lines.');
-          done();
-        });
+        .send(invalidBookmark);
+
+      expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+      expect(response.body.title).to.contain('The description hast too many lines.');
     });
 
   });
 
   describe('inexistent bookmark id tests', function () {
-    it('should fail trying to update inexistent bookmark', function (done) {
+    it('should fail trying to update inexistent bookmark', async function () {
       let inexistentBookmarkId = '507f1f77bcf86cd799439011';
-      request(app)
+
+      const response = await request(app)
         .put(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${inexistentBookmarkId}`)
         .set('Authorization', bearerToken)
-        .send(bookmarkExample)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.NOT_FOUND);
-          expect(response.body.title).to.equal('Not Found Error');
-          done();
-        });
+        .send(bookmarkExample);
+
+      expect(response.statusCode).to.equal(HttpStatus.NOT_FOUND);
+      expect(response.body.title).to.equal('Not Found Error');
     });
-    it('should fail trying to delete inexistent bookmark', function (done) {
+
+    it('should fail trying to delete inexistent bookmark', async function () {
       let inexistentBookmarkId = '507f1f77bcf86cd799439011';
-      request(app)
+
+      const response = await request(app)
         .delete(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${inexistentBookmarkId}`)
-        .set('Authorization', bearerToken)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.NOT_FOUND);
-          expect(response.body.title).to.equal('Not Found Error');
-          done();
-        });
+        .set('Authorization', bearerToken);
+
+      expect(response.statusCode).to.equal(HttpStatus.NOT_FOUND);
+      expect(response.body.title).to.equal('Not Found Error');
     });
 
   });
@@ -271,7 +247,7 @@ describe('Personal Bookmarks tests', function () {
         .set('Authorization', bearerToken)
         .send(bookmarkExample)
         .end(function (error, response) {
-          if ( error ) {
+          if (error) {
             return done(error);
           }
           expect(response.statusCode).to.equal(HttpStatus.CREATED);
@@ -287,7 +263,7 @@ describe('Personal Bookmarks tests', function () {
             .get(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${bookmarkId}`)
             .set('Authorization', bearerToken)
             .end(function (error, response) {
-              if ( error ) {
+              if (error) {
                 return done(error);
               }
               expect(response.statusCode).to.equal(HttpStatus.OK);
@@ -308,7 +284,7 @@ describe('Personal Bookmarks tests', function () {
         .set('Authorization', bearerToken)
         .send(bookmarkExample)
         .end(function (error, response) {
-          if ( error ) {
+          if (error) {
             return done(error);
           }
           expect(response.statusCode).to.equal(HttpStatus.CONFLICT);
@@ -392,7 +368,7 @@ describe('Personal Bookmarks tests', function () {
         let invalidBookmark = JSON.parse(JSON.stringify(createdBookmark));
         const textSnippet = "long text in the making";
         let longText = textSnippet;
-        for ( var i = 0; i < 100; i++ ) {
+        for (var i = 0; i < 100; i++) {
           longText += textSnippet;
         }
         invalidBookmark.description = longText;
@@ -412,7 +388,7 @@ describe('Personal Bookmarks tests', function () {
         let invalidBookmark = JSON.parse(JSON.stringify(createdBookmark));
         const line = "oneline\n";
         let longText = line;
-        for ( var i = 0; i < 101; i++ ) {
+        for (var i = 0; i < 101; i++) {
           longText += line;
         }
         invalidBookmark.description = longText;
@@ -447,7 +423,7 @@ describe('Personal Bookmarks tests', function () {
             .get(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${updatedBookmark._id}`)
             .set('Authorization', bearerToken)
             .end(function (error, response) {
-              if ( error ) {
+              if (error) {
                 return done(error);
               }
               expect(response.statusCode).to.equal(HttpStatus.OK);
@@ -463,7 +439,7 @@ describe('Personal Bookmarks tests', function () {
         .delete(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${createdBookmark._id}`)
         .set('Authorization', bearerToken)
         .end(function (error, response) {
-          if ( error ) {
+          if (error) {
             return done(error);
           }
           expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
@@ -514,7 +490,7 @@ describe('Personal Bookmarks tests', function () {
           .set('Authorization', bearerToken)
           .send(bookmarkExample);
 
-        if ( response.statusCode !== HttpStatus.CREATED ) {
+        if (response.statusCode !== HttpStatus.CREATED) {
           throw new Error("Sample bookmark not properly created");
         }
         const locationHeaderValue = response.header['location']
@@ -543,7 +519,7 @@ describe('Personal Bookmarks tests', function () {
         .set('Authorization', bearerToken)
         .send(userData);
 
-      if ( createUserDataResponse.statusCode !== HttpStatus.CREATED ) {
+      if (createUserDataResponse.statusCode !== HttpStatus.CREATED) {
         throw new Error("Sample bookmark not properly created");
       }
 
@@ -622,20 +598,18 @@ describe('Personal Bookmarks tests', function () {
         });
     });
 
-    it(`should find bookmark with special source code url title - ${verySpecialSourceCodeUrl} `, function (done) {
-      request(app)
+    it(`should find bookmark with special source code url title - ${verySpecialSourceCodeUrl} `, async function () {
+      const response = await request(app)
         .get(basePathApiPersonalUsersBookmarks)
         .set('Authorization', bearerToken)
         .query({q: `${verySpecialSourceCodeUrl}`})
-        .query({limit: 10})
-        .end(function (err, response) {
-          expect(response.statusCode).to.equal(HttpStatus.OK);
-          const filteredBookmarks = response.body;
-          const foundBookmark = filteredBookmarks[0];
-          expect(filteredBookmarks.length).to.equal(1);
-          expect(foundBookmark.name).to.equal(verySpecialTitle);
-          done();
-        });
+        .query({limit: 10});
+
+      expect(response.statusCode).to.equal(HttpStatus.OK);
+      const filteredBookmarks = response.body;
+      const foundBookmark = filteredBookmarks[0];
+      expect(filteredBookmarks.length).to.equal(1);
+      expect(foundBookmark.name).to.equal(verySpecialTitle);
     });
 
     it(`should find bookmark with special location - ${verySpecialLocation} `, function (done) {

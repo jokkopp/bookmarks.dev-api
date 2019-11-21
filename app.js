@@ -11,7 +11,7 @@ const usersRouter = require('./routes/users/users');
 const adminRouter = require('./routes/admin/admin');
 const publicBookmarksRouter = require('./routes/public-bookmarks');
 const AppError = require('./models/error');
-const UseridTokenValidationError = require('./models/userid-token-validation.error');
+const UseridTokenValidationError = require('./routes/users/userid-validation.error');
 
 const MyError = require('./models/myerror');
 
@@ -111,7 +111,10 @@ app.use(function(err, req, res, next) {
   }
   if(err instanceof UseridTokenValidationError) {
     res.status(HttpStatus.UNAUTHORIZED);
-    return res.send(err);
+    return res.send({
+      httpStatus: HttpStatus.UNAUTHORIZED,
+      message: err.message
+    });
   } else {
     res.status(err.status || HttpStatus.INTERNAL_SERVER_ERROR);
     res.send({
