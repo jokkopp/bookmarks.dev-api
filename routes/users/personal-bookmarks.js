@@ -11,6 +11,7 @@ const UserIdValidator = require('./userid.validator');
 const AsyncWrapper = require('../../common/async-wrapper');
 
 const AppError = require('../../models/error');
+const ValidationError = require('../../models/validation.error');
 
 const common = require('../../common/config');
 const config = common.config();
@@ -27,31 +28,24 @@ const showdown = require('showdown'),
 const keycloak = new Keycloak({scope: 'openid'}, config.keycloak);
 personalBookmarksRouter.use(keycloak.middleware());
 
-/**
- * CREATE bookmark for user
- */
-personalBookmarksRouter.post('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
+let validateBookmarkInput = function(request, response, bookmark) {
 
-  UserIdValidator.validateUserId(request);
-
-  const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
-
+  let validationErrorMessages = [];
   if (bookmark.userId !== request.params.userId) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'The userId of the bookmark does not match the userId parameter', ['The userId of the bookmark does not match the userId parameter']));
+    validationErrorMessages.push("The userId of the bookmark does not match the userId parameter");
+  }
+  if(!bookmark.name) {
+    validationErrorMessages.push('Missing required attribute - name');
+  }
+  if(!bookmark.location) {
+    validationErrorMessages.push('Missing required attribute - location');
+  }
+  if(!bookmark.tags || bookmark.tags.length === 0) {
+    validationErrorMessages.push('Missing required attribute - tags');
   }
 
-  const missingRequiredAttributes = !bookmark.name || !bookmark.location || !bookmark.tags || bookmark.tags.length === 0;
-  if (missingRequiredAttributes) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'Missing required attributes', ['Missing required attributes']));
-  }
   if (bookmark.tags.length > constants.MAX_NUMBER_OF_TAGS) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'Too many tags have been submitted', ['Too many tags have been submitted']));
+    validationErrorMessages.push('Too many tags have been submitted - max allowed 8');
   }
 
   let blockedTags = '';
@@ -63,28 +57,36 @@ personalBookmarksRouter.post('/', keycloak.protect(), AsyncWrapper.wrapAsync(asy
   }
 
   if (blockedTags) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'The following tags are blocked:' + blockedTags, ['The following tags are blocked:' + blockedTags]));
+    validationErrorMessages.push('The following tags are blocked:' + blockedTags);
   }
 
   if (bookmark.description) {
     const descriptionIsTooLong = bookmark.description.length > constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION;
     if (descriptionIsTooLong) {
-      return response
-        .status(HttpStatus.BAD_REQUEST)
-        .send(new AppError(HttpStatus.BAD_REQUEST, 'The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed',
-          ['The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed']));
+      validationErrorMessages.push('The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed');
     }
 
     const descriptionHasTooManyLines = bookmark.description.split('\n').length > constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION;
     if (descriptionHasTooManyLines) {
-      return response
-        .status(HttpStatus.BAD_REQUEST)
-        .send(new AppError(HttpStatus.BAD_REQUEST, 'The description hast too many lines. Only ' + constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION + ' allowed',
-          ['The description hast too many lines. Only ' + constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION + ' allowed']));
+      validationErrorMessages.push('The description hast too many lines. Only ' + constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION + ' allowed');
     }
   }
+
+  if(validationErrorMessages.length > 0){
+      throw new ValidationError('The bookmark you submitted is not valid', validationErrorMessages);
+  }
+}
+
+/**
+ * CREATE bookmark for user
+ */
+personalBookmarksRouter.post('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
+
+  UserIdValidator.validateUserId(request);
+
+  const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
+
+  validateBookmarkInput(request, response, bookmark);
 
   if (bookmark.shared) {
     const existingBookmark = await Bookmark.findOne({
@@ -382,7 +384,7 @@ personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(a
         .send(new AppError(
           HttpStatus.NOT_FOUND,
           'Not Found Error',
-          ['Bookmark NOT_FOUND for user id ' + request.params.userId + ' and location ' + bookmarkId]
+          ['Bookmark NOT_FOUND for user id ' + request.params.userId + ' and location ' + location]
           )
         );
     }
@@ -393,7 +395,7 @@ personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(a
     return response
       .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown server error',
-        ['Unknown server error when trying to delete bookmark with id ' + bookmarkId]));
+        ['Unknown server error when trying to delete bookmark with location ' + location]));
   }
 }));
 

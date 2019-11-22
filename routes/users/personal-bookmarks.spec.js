@@ -16,6 +16,7 @@ const common = require('../../common/config');
 const config = common.config();
 const AppError = require('../../models/error');
 const MyError = require('../../models/myerror');
+const constants = require('../../common/constants');
 
 const superagent = require('superagent');
 
@@ -43,9 +44,10 @@ describe('Personal Bookmarks tests', function () {
       bearerToken = 'Bearer ' + accessToken;
       const decoded = jwt.decode(accessToken);
       testUserId = decoded.sub;
+      const bookmarkExampleLocation = "http://www.codepedia.org/personal-bookmarks-tests";
       bookmarkExample = {
-        "name": "Cleaner code in NodeJs with async-await - Mongoose calls example – CodingpediaOrg",
-        "location": "http://www.codingpedia.org/ama/cleaner-code-in-nodejs-with-async-await-mongoose-calls-example",
+        "name": "Cleaner code in NodeJs with async-await - Mongoose calls example – CodepediaOrg",
+        "location": bookmarkExampleLocation,
         "language": "en",
         "tags": [
           "nodejs",
@@ -63,6 +65,11 @@ describe('Personal Bookmarks tests', function () {
         "likes": 0,
         "lastAccessedAt": null
       }
+
+      const deleteIfExistingResponse = await request(app)
+        .delete(`${baseApiUrlUnderTest}${testUserId}/bookmarks`)
+        .query({'location': bookmarkExampleLocation})
+        .set('Authorization', bearerToken);
 
     } catch (err) {
       console.error('Error when getting user bearer token', err)
@@ -118,7 +125,8 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.title).to.equal('Missing required attributes');
+      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.validationErrors).to.include('Missing required attribute - name');
     });
 
     it('should fail trying to CREATE bookmark without a location', async function () {
@@ -131,7 +139,8 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.title).to.equal('Missing required attributes');
+      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.validationErrors).to.include('Missing required attribute - location');
     });
 
     it('should fail trying to CREATE bookmark without tags', async function () {
@@ -144,7 +153,8 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark)
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.title).to.equal('Missing required attributes');
+      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.validationErrors).to.include('Missing required attribute - tags');
     });
 
     it('should fail trying to CREATE bookmark with too many tags', async function () {
@@ -157,7 +167,8 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.title).to.equal('Too many tags have been submitted');
+      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.validationErrors).to.include('Too many tags have been submitted - max allowed 8');
     });
 
     it('should fail trying to CREATE bookmark with blocked tags', async function () {
@@ -170,7 +181,8 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.title).to.equal('The following tags are blocked: awesome awesome-java');
+      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.validationErrors).to.include('The following tags are blocked: awesome awesome-java');
     });
 
     it('should fail trying to CREATE bookmark with a too big description', async function () {
@@ -188,7 +200,8 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark)
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.title).to.contain('The description is too long.');
+      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.validationErrors).to.include('The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed');
     });
 
     it('should fail trying to CREATE bookmark with a description with too many lines', async function () {
@@ -206,7 +219,8 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.title).to.contain('The description hast too many lines.');
+      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.validationErrors).to.include('The description hast too many lines. Only ' + constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION + ' allowed');
     });
 
   });
@@ -241,56 +255,41 @@ describe('Personal Bookmarks tests', function () {
 
     let createdBookmark;
 
-    it('should succeed creating example bookmark', function (done) {
-      request(app)
+    it('should succeed creating example bookmark', async function () {
+      const response = await request(app)
         .post(`${baseApiUrlUnderTest}${testUserId}/bookmarks`)
         .set('Authorization', bearerToken)
-        .send(bookmarkExample)
-        .end(function (error, response) {
-          if (error) {
-            return done(error);
-          }
-          expect(response.statusCode).to.equal(HttpStatus.CREATED);
-          const locationHeaderValue = response.header['location']
-          const isLocationHeaderPresent = response.header['location'] !== undefined;
-          expect(isLocationHeaderPresent).to.be.true;
+        .send(bookmarkExample);
 
-          //set the id of the bookmarkexample now that it is created
-          const lastSlashIndex = locationHeaderValue.lastIndexOf('/');
-          const bookmarkId = locationHeaderValue.substring(lastSlashIndex + 1);
+      expect(response.statusCode).to.equal(HttpStatus.CREATED);
+      const locationHeaderValue = response.header['location']
+      const isLocationHeaderPresent = response.header['location'] !== undefined;
+      expect(isLocationHeaderPresent).to.be.true;
 
-          request(app)
-            .get(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${bookmarkId}`)
-            .set('Authorization', bearerToken)
-            .end(function (error, response) {
-              if (error) {
-                return done(error);
-              }
-              expect(response.statusCode).to.equal(HttpStatus.OK);
-              createdBookmark = response.body;
-              console.log(createdBookmark);
-              expect(createdBookmark._id).to.equal(bookmarkId);
-              expect(createdBookmark.name).to.equal(bookmarkExample.name);
-              expect(createdBookmark.location).to.equal(bookmarkExample.location);
+      //set the id of the bookmarkexample now that it is created
+      const lastSlashIndex = locationHeaderValue.lastIndexOf('/');
+      const bookmarkId = locationHeaderValue.substring(lastSlashIndex + 1);
 
-              done();
-            });
-        });
+      const bookmarkResponse = await request(app)
+        .get(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${bookmarkId}`)
+        .set('Authorization', bearerToken);
+
+      expect(bookmarkResponse.statusCode).to.equal(HttpStatus.OK);
+      createdBookmark = bookmarkResponse.body;
+      expect(createdBookmark._id).to.equal(bookmarkId);
+      expect(createdBookmark.name).to.equal(bookmarkExample.name);
+      expect(createdBookmark.location).to.equal(bookmarkExample.location);
+
     });
 
-    it('should fail trying to add bookmark with existent location for same user', function (done) {
-      request(app)
+    it('should fail trying to add bookmark with existent location for same user', async function () {
+      const response = await request(app)
         .post(`${baseApiUrlUnderTest}${testUserId}/bookmarks`)
         .set('Authorization', bearerToken)
         .send(bookmarkExample)
-        .end(function (error, response) {
-          if (error) {
-            return done(error);
-          }
-          expect(response.statusCode).to.equal(HttpStatus.CONFLICT);
-          expect(response.body.title).to.equal('A public bookmark with this location is already present');
-          done();
-        });
+
+      expect(response.statusCode).to.equal(HttpStatus.CONFLICT);
+      expect(response.body.title).to.equal('A public bookmark with this location is already present');
     });
 
     describe('invalid bookmark attributes at UPDATE', function () {
@@ -618,21 +617,21 @@ describe('Personal Bookmarks tests', function () {
       expect(foundBookmark.name).to.equal(verySpecialTitle);
     });
 
-    it(`should find bookmark with special location - ${verySpecialLocation} `, function (done) {
-      request(app)
+    it(`should find bookmark with special location - ${verySpecialLocation} `, async function () {
+      const response = await request(app)
         .get(basePathApiPersonalUsersBookmarks)
         .set('Authorization', bearerToken)
         .query({q: `${verySpecialLocation}`})
-        .query({limit: 10})
-        .end(function (err, response) {
-          expect(response.statusCode).to.equal(HttpStatus.OK);
-          const filteredBookmarks = response.body;
-          const foundBookmark = filteredBookmarks[0];
-          expect(filteredBookmarks.length).to.equal(1);
-          expect(foundBookmark.name).to.equal(verySpecialTitle);
-          done();
-        });
+        .query({limit: 10});
+
+      expect(response.statusCode).to.equal(HttpStatus.OK);
+      const filteredBookmarks = response.body;
+      const foundBookmark = filteredBookmarks[0];
+      expect(filteredBookmarks.length).to.equal(1);
+      expect(foundBookmark.name).to.equal(verySpecialTitle);
+
     });
+
   });
 
 })

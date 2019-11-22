@@ -11,6 +11,7 @@ const usersRouter = require('./routes/users/users');
 const adminRouter = require('./routes/admin/admin');
 const publicBookmarksRouter = require('./routes/public-bookmarks');
 const AppError = require('./models/error');
+const ValidationError = require('./models/validation.error');
 const UseridTokenValidationError = require('./routes/users/userid-validation.error');
 
 const MyError = require('./models/myerror');
@@ -27,10 +28,10 @@ const swaggerDocument = YAML.load('./docs/swagger.yaml');
 const app = express();
 
 const mongoUserName = process.env.MONGODB_BOOKMARKS_USERNAME || 'bookmarks';
-const mongoUserPwd= process.env.MONGODB_BOOKMARKS_PASSWORD || 'secret';
-const mongoBookmarksCollectionName= process.env.MONGODB_BOOKMARKS_COLLECTION || 'dev-bookmarks';
-const mongoHost= process.env.MONGODB_HOST || 'localhost';
-const mongoPort= process.env.MONGODB_PORT || '27017';
+const mongoUserPwd = process.env.MONGODB_BOOKMARKS_PASSWORD || 'secret';
+const mongoBookmarksCollectionName = process.env.MONGODB_BOOKMARKS_COLLECTION || 'dev-bookmarks';
+const mongoHost = process.env.MONGODB_HOST || 'localhost';
+const mongoPort = process.env.MONGODB_PORT || '27017';
 
 const mongooseConnectOptions = {
   useNewUrlParser: true,
@@ -62,12 +63,12 @@ setUpLogging();
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));//swagger docs are not protected
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 //add CORS support
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, PUT, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Location');
@@ -83,7 +84,7 @@ app.use('/api/personal/users', usersRouter);
 app.use('/api/admin', adminRouter);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   const err = new Error('Not Found');
   err.status = HttpStatus.NOT_FOUND;
   next(err);
@@ -94,7 +95,7 @@ app.use(function(req, res, next) {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-  app.use(function(err, req, res) {
+  app.use(function (err, req, res) {
     res.status(err.status || HttpStatus.INTERNAL_SERVER_ERROR);
     res.render({
       message: err.message,
@@ -105,16 +106,19 @@ if (app.get('env') === 'development') {
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   if (res.headersSent) {
     return next(err)
   }
-  if(err instanceof UseridTokenValidationError) {
+  if (err instanceof UseridTokenValidationError) {
     res.status(HttpStatus.UNAUTHORIZED);
     return res.send({
       httpStatus: HttpStatus.UNAUTHORIZED,
       message: err.message
     });
+  } else if (err instanceof ValidationError) {
+    res.status(HttpStatus.BAD_REQUEST);
+    return res.send(err);
   } else {
     res.status(err.status || HttpStatus.INTERNAL_SERVER_ERROR);
     res.send({
