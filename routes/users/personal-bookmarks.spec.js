@@ -293,157 +293,135 @@ describe('Personal Bookmarks tests', function () {
     });
 
     describe('invalid bookmark attributes at UPDATE', function () {
-      it('should fail trying to UPDATE bookmark without a title', function (done) {
-        let invalidBookmark = JSON.parse(JSON.stringify(createdBookmark));
-        invalidBookmark.name = '';
-        request(app)
+      it('should fail trying to UPDATE bookmark without a title', async function () {
+        let bookmarkWithoutName = JSON.parse(JSON.stringify(createdBookmark));
+        bookmarkWithoutName.name = '';
+
+        const response = await request(app)
           .put(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${createdBookmark._id}`)
           .set('Authorization', bearerToken)
-          .send(invalidBookmark)
-          .end(function (error, response) {
-            expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-            expect(response.body.title).to.equal('Missing required attributes');
-            done();
-          });
+          .send(bookmarkWithoutName);
+
+        expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+        expect(response.body.validationErrors).to.include('Missing required attribute - name');
       });
 
-      it('should fail trying to UPDATE bookmark without a location', function (done) {
-        let invalidBookmark = JSON.parse(JSON.stringify(createdBookmark));
-        invalidBookmark.location = '';
-        request(app)
+      it('should fail trying to UPDATE bookmark without a location', async function () {
+        let bookmarkWithoutLocation = JSON.parse(JSON.stringify(createdBookmark));
+        bookmarkWithoutLocation.location = '';
+        const response = await request(app)
           .put(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${createdBookmark._id}`)
           .set('Authorization', bearerToken)
-          .send(invalidBookmark)
-          .end(function (error, response) {
-            expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-            expect(response.body.title).to.equal('Missing required attributes');
-            done();
-          });
+          .send(bookmarkWithoutLocation);
+
+        expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+        expect(response.body.validationErrors).to.include('Missing required attribute - location');
       });
 
-      it('should fail trying to UPDATE bookmark without tags', function (done) {
-        let invalidBookmark = JSON.parse(JSON.stringify(createdBookmark));
-        invalidBookmark.tags = [];
-        request(app)
+      it('should fail trying to UPDATE bookmark without tags', async function () {
+        let bookmarkWithoutTags = JSON.parse(JSON.stringify(createdBookmark));
+        bookmarkWithoutTags.tags = [];
+        const response = await request(app)
           .put(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${createdBookmark._id}`)
           .set('Authorization', bearerToken)
-          .send(invalidBookmark)
-          .end(function (error, response) {
-            expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-            expect(response.body.title).to.equal('Missing required attributes');
-            done();
-          });
+          .send(bookmarkWithoutTags);
+
+        expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+        expect(response.body.validationErrors).to.include('Missing required attribute - tags');
       });
 
-      it('should fail trying to UPDATE bookmark with too many tags', function (done) {
-        let invalidBookmark = JSON.parse(JSON.stringify(createdBookmark));
-        invalidBookmark.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5', 'tag6', 'tag7', 'tag8', 'tag9'];
-        request(app)
+      it('should fail trying to UPDATE bookmark with too many tags', async function () {
+        let bookmarkWithTooManyTags = JSON.parse(JSON.stringify(createdBookmark));
+        bookmarkWithTooManyTags.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5', 'tag6', 'tag7', 'tag8', 'tag9'];
+
+        const response = await request(app)
           .put(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${createdBookmark._id}`)
           .set('Authorization', bearerToken)
-          .send(invalidBookmark)
-          .end(function (error, response) {
-            expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-            expect(response.body.title).to.equal('Too many tags have been submitted');
-            done();
-          });
+          .send(bookmarkWithTooManyTags);
+
+        expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+        expect(response.body.validationErrors).to.include('Too many tags have been submitted - max allowed 8');
       });
 
-      it('should fail trying to UPDATE bookmark with blocked tags', function (done) {
-        let invalidBookmark = JSON.parse(JSON.stringify(createdBookmark));
-        invalidBookmark.tags = ['tag1', 'tag2', 'tag3', 'awesome', 'awesome-java'];
-        request(app)
+      it('should fail trying to UPDATE bookmark with blocked tags', async function () {
+        let bookmarkWithBlockedTags = JSON.parse(JSON.stringify(createdBookmark));
+        bookmarkWithBlockedTags.tags = ['tag1', 'tag2', 'tag3', 'awesome', 'awesome-java'];
+
+        const response = await request(app)
           .put(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${createdBookmark._id}`)
           .set('Authorization', bearerToken)
-          .send(invalidBookmark)
-          .end(function (error, response) {
-            expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-            expect(response.body.title).to.equal('The following tags are blocked: awesome awesome-java');
-            done();
-          });
+          .send(bookmarkWithBlockedTags);
+
+        expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+        expect(response.body.validationErrors).to.include('The following tags are blocked: awesome awesome-java');
       });
 
-      it('should fail trying to UPDATE bookmark with a too big description', function (done) {
-        let invalidBookmark = JSON.parse(JSON.stringify(createdBookmark));
+      it('should fail trying to UPDATE bookmark with a too big description', async function () {
+        let bookmarkWithTooBigDescription = JSON.parse(JSON.stringify(createdBookmark));
         const textSnippet = "long text in the making";
         let longText = textSnippet;
         for (var i = 0; i < 100; i++) {
           longText += textSnippet;
         }
-        invalidBookmark.description = longText;
+        bookmarkWithTooBigDescription.description = longText;
 
-        request(app)
+        const response = await request(app)
           .put(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${createdBookmark._id}`)
           .set('Authorization', bearerToken)
-          .send(invalidBookmark)
-          .end(function (error, response) {
-            expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-            expect(response.body.title).to.contain('The description is too long.');
-            done();
-          });
+          .send(bookmarkWithTooBigDescription);
+
+        expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+        expect(response.body.validationErrors).to.include('The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed');
       });
 
-      it('should fail trying to UPDATE bookmark with a description with too many lines', function (done) {
-        let invalidBookmark = JSON.parse(JSON.stringify(createdBookmark));
+      it('should fail trying to UPDATE bookmark with a description with too many lines', async function () {
+        let bookmarkWithDescriptionWithTooManyLines = JSON.parse(JSON.stringify(createdBookmark));
         const line = "oneline\n";
         let longText = line;
         for (var i = 0; i < 101; i++) {
           longText += line;
         }
-        invalidBookmark.description = longText;
+        bookmarkWithDescriptionWithTooManyLines.description = longText;
 
-        request(app)
+        const response = await request(app)
           .put(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${createdBookmark._id}`)
           .set('Authorization', bearerToken)
-          .send(invalidBookmark)
-          .end(function (error, response) {
-            expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-            expect(response.body.title).to.contain('The description hast too many lines.');
-            done();
-          });
+          .send(bookmarkWithDescriptionWithTooManyLines);
+
+        expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+        expect(response.body.validationErrors).to.include('The description hast too many lines. Only ' + constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION + ' allowed');
       });
 
     });
 
-    it('should successfully UPDATE bookmark', function (done) {
+    it('should successfully UPDATE bookmark', async function () {
       let updatedBookmark = JSON.parse(JSON.stringify(createdBookmark));
       updatedBookmark.name += ' rocks';
 
-      request(app)
+      const updateResponse = await request(app)
         .put(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${updatedBookmark._id}`)
         .set('Authorization', bearerToken)
-        .send(updatedBookmark)
-        .end(function (error, response) {
-          expect(response.statusCode).to.equal(HttpStatus.OK);
-          expect(response.body.name).to.equal(bookmarkExample.name + ' rocks');
+        .send(updatedBookmark);
 
-          //make also a read to be sure sure :P
-          request(app)
-            .get(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${updatedBookmark._id}`)
-            .set('Authorization', bearerToken)
-            .end(function (error, response) {
-              if (error) {
-                return done(error);
-              }
-              expect(response.statusCode).to.equal(HttpStatus.OK);
-              expect(response.body.name).to.equal(bookmarkExample.name + ' rocks');
+      expect(updateResponse.statusCode).to.equal(HttpStatus.OK);
+      expect(updateResponse.body.name).to.equal(bookmarkExample.name + ' rocks');
 
-              done();
-            });
-        });
+      //make also a read to be sure sure :P
+      const readUpdatedResponse = await request(app)
+        .get(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${updatedBookmark._id}`)
+        .set('Authorization', bearerToken);
+
+      expect(readUpdatedResponse.statusCode).to.equal(HttpStatus.OK);
+      expect(readUpdatedResponse.body.name).to.equal(bookmarkExample.name + ' rocks');
+
     });
 
-    it('should succeed deleting created bookmark', function (done) {
-      request(app)
+    it('should succeed deleting created bookmark', async function () {
+      const response = await request(app)
         .delete(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${createdBookmark._id}`)
-        .set('Authorization', bearerToken)
-        .end(function (error, response) {
-          if (error) {
-            return done(error);
-          }
-          expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
-          done();
-        });
+        .set('Authorization', bearerToken);
+
+      expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
     });
 
   });
@@ -634,5 +612,4 @@ describe('Personal Bookmarks tests', function () {
 
   });
 
-})
-;
+});

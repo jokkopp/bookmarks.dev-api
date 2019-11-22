@@ -216,55 +216,10 @@ personalBookmarksRouter.put('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
 
   UserIdValidator.validateIsAdminOrUserId(request);
 
-  if (request.body.userId !== request.params.userId) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'The userId of the bookmark does not match the userId parameter', ['The userId of the bookmark does not match the userId parameter']));
-  }
+  const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
 
-  const requiredAttributesMissing = !request.body.name || !request.body.location || !request.body.tags || request.body.tags.length === 0;
-  if (requiredAttributesMissing) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'Missing required attributes', ['Missing required attributes']));
-  }
+  validateBookmarkInput(request, response, bookmark);
 
-  if (request.body.tags.length > constants.MAX_NUMBER_OF_TAGS) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'Too many tags have been submitted', ['Too many tags have been submitted']));
-  }
-
-  let blockedTags = '';
-  for (let i = 0; i < request.body.tags.length; i++) {
-    const tag = request.body.tags[i];
-    if (tag.startsWith('awesome')) {
-      blockedTags = blockedTags.concat(' ' + tag);
-    }
-  }
-  if (blockedTags) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'The following tags are blocked:' + blockedTags, ['The following tags are blocked:' + blockedTags]));
-  }
-
-  const descriptionIsTooLong = request.body.description.length > constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION;
-  if (descriptionIsTooLong) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed',
-        ['The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed']));
-  }
-
-  if (request.body.description) {
-    const descriptionHasTooManyLines = request.body.description.split('\n').length > constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION;
-    if (descriptionHasTooManyLines) {
-      return response
-        .status(HttpStatus.BAD_REQUEST)
-        .send(new AppError(HttpStatus.BAD_REQUEST, 'The description hast too many lines. Only ' + constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION + ' allowed',
-          ['The description hast too many lines. Only ' + constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION + ' allowed']));
-    }
-  }
   if (request.body.shared) {
     const existingBookmark = await Bookmark.findOne({
       shared: true,
@@ -279,22 +234,17 @@ personalBookmarksRouter.put('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
     }
   }
 
-  const descriptionHtmlNotSet = !request.body.descriptionHtml;
-  if (descriptionHtmlNotSet) {
-    request.body.descriptionHtml = converter.makeHtml(request.body.description);
-  }
-
   try {
-    const bookmark = await Bookmark.findOneAndUpdate(
+    const updatedBookmark = await Bookmark.findOneAndUpdate(
       {
         _id: request.params.bookmarkId,
         userId: request.params.userId
       },
-      request.body,
+      bookmark,
       {new: true}
     );
 
-    const bookmarkNotFound = !bookmark;
+    const bookmarkNotFound = !updatedBookmark;
     if (bookmarkNotFound) {
       return response
         .status(HttpStatus.NOT_FOUND)
@@ -302,7 +252,7 @@ personalBookmarksRouter.put('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
     } else {
       return response
         .status(200)
-        .send(bookmark);
+        .send(updatedBookmark);
     }
   } catch (err) {
     if (err.name === 'MongoError' && err.code === 11000) {
