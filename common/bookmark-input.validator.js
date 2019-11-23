@@ -3,17 +3,30 @@ const ValidationError = require('../models/validation.error');
 
 let validateBookmarkInput = function(request, response, bookmark) {
 
-  let validationErrorMessages = [];
+  let validationErrorMessages = validateInputExceptUserId(bookmark);
   if (bookmark.userId !== request.params.userId) {
     validationErrorMessages.push("The userId of the bookmark does not match the userId parameter");
   }
-  if(!bookmark.name) {
+
+  if(validationErrorMessages.length > 0){
+    throw new ValidationError('The bookmark you submitted is not valid', validationErrorMessages);
+  }
+}
+
+function validateInputExceptUserId(bookmark) {
+  let validationErrorMessages = [];
+
+  if (!bookmark.userId) {
+    validationErrorMessages.push('Missing required attribute - userId');
+  }
+
+  if (!bookmark.name) {
     validationErrorMessages.push('Missing required attribute - name');
   }
-  if(!bookmark.location) {
+  if (!bookmark.location) {
     validationErrorMessages.push('Missing required attribute - location');
   }
-  if(!bookmark.tags || bookmark.tags.length === 0) {
+  if (!bookmark.tags || bookmark.tags.length === 0) {
     validationErrorMessages.push('Missing required attribute - tags');
   }
 
@@ -45,9 +58,19 @@ let validateBookmarkInput = function(request, response, bookmark) {
     }
   }
 
+  return validationErrorMessages;
+}
+
+let validateBookmarkInputForAdmin = function(request, response, bookmark) {
+
+  let validationErrorMessages = validateInputExceptUserId(bookmark);
+
   if(validationErrorMessages.length > 0){
     throw new ValidationError('The bookmark you submitted is not valid', validationErrorMessages);
   }
 }
 
-module.exports.validateBookmarkInput = validateBookmarkInput;
+module.exports = {
+  validateBookmarkInput: validateBookmarkInput,
+  validateBookmarkInputForAdmin: validateBookmarkInputForAdmin
+};

@@ -9,9 +9,11 @@ const AppError = require('../../models/error');
 
 const common = require('../../common/config');
 const config = common.config();
-const constants = require('../../common/constants');
+const BookmarkInputValidator = require('../../common/bookmark-input.validator');
 
 const HttpStatus = require('http-status-codes');
+
+const AsyncWrapper = require('../../common/async-wrapper');
 
 //showdown converter - https://github.com/showdownjs/showdown
 const showdown = require('showdown'),
@@ -23,7 +25,7 @@ adminRouter.use(keycloak.middleware());
 
 
 /* GET all bookmarks */
-adminRouter.get('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), async (request, response) => {
+adminRouter.get('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
   try {
     let bookmarks;
     let filter = {};
@@ -44,10 +46,10 @@ adminRouter.get('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), async (reque
       .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .send(err);
   }
-});
+}));
 
 
-adminRouter.get('/tags', keycloak.protect('realm:ROLE_ADMIN'), async (request, response) => {
+adminRouter.get('/tags', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
   try {
     const tags = await Bookmark.aggregate(
       [
@@ -65,7 +67,7 @@ adminRouter.get('/tags', keycloak.protect('realm:ROLE_ADMIN'), async (request, r
       .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .send(err);
   }
-});
+}));
 
 
 /**
@@ -76,7 +78,7 @@ adminRouter.get('/tags', keycloak.protect('realm:ROLE_ADMIN'), async (request, r
  * the query parameter numberOfDays. If not present it defaults to 7 days, last week.
  *
  */
-adminRouter.get('/bookmarks/latest-entries', keycloak.protect('realm:ROLE_ADMIN'), async (req, res) => {
+adminRouter.get('/bookmarks/latest-entries', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (req, res) => {
   try {
     if (req.query.since) {
       const fromDate = new Date(parseFloat(req.query.since, 0));
@@ -112,10 +114,10 @@ adminRouter.get('/bookmarks/latest-entries', keycloak.protect('realm:ROLE_ADMIN'
   } catch (err) {
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(err);
   }
-});
+}));
 
 /* GET bookmark by id */
-adminRouter.get('/bookmarks/:bookmarkId', keycloak.protect(), async (request, response) => {
+adminRouter.get('/bookmarks/:bookmarkId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
 
   try {
     const bookmark = await Bookmark.findOne({
@@ -140,44 +142,16 @@ adminRouter.get('/bookmarks/:bookmarkId', keycloak.protect(), async (request, re
       .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown server error',
         ['Unknown server error when trying to delete bookmark with id ' + request.params.bookmarkId]));
   }
-});
+}));
 
 /**
  * create bookmark
  */
-adminRouter.post('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), async (request, response) => {
+adminRouter.post('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
 
   const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
 
-  const missingRequiredAttributes = !bookmark.userId ||!bookmark.name || !bookmark.location || !bookmark.tags || bookmark.tags.length === 0;
-  if (missingRequiredAttributes) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'Missing required attributes', ['Missing required attributes']));
-  }
-  if (bookmark.tags.length > constants.MAX_NUMBER_OF_TAGS) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'Too many tags have been submitted', ['Too many tags have been submitted']));
-  }
-
-  if (bookmark.description) {
-    const descriptionIsTooLong = bookmark.description.length > constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION;
-    if (descriptionIsTooLong) {
-      return response
-        .status(HttpStatus.BAD_REQUEST)
-        .send(new AppError(HttpStatus.BAD_REQUEST, 'The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed',
-          ['The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed']));
-    }
-
-    const descriptionHasTooManyLines = bookmark.description.split('\n').length > constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION;
-    if (descriptionHasTooManyLines) {
-      return response
-        .status(HttpStatus.BAD_REQUEST)
-        .send(new AppError(HttpStatus.BAD_REQUEST, 'The description hast too many lines. Only ' + constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION + ' allowed',
-          ['The description hast too many lines. Only ' + constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION + ' allowed']));
-    }
-  }
+  BookmarkInputValidator.validateBookmarkInputForAdmin(request, response, bookmark);
 
   if ( bookmark.shared ) {
     const existingBookmark = await Bookmark.findOne({
@@ -212,59 +186,29 @@ adminRouter.post('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), async (requ
       .send(err);
   }
 
-});
+}));
 
 
 /**
  * full UPDATE via PUT - that is the whole document is required and will be updated
  * the descriptionHtml parameter is only set in backend, if only does not come front-end (might be an API call)
  */
-adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), async (request, response) => {
+adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
 
-  const requiredAttributesMissing = !request.body.userId ||  !request.body.name || !request.body.location || !request.body.tags || request.body.tags.length === 0;
-  if (requiredAttributesMissing) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'Missing required attributes', ['Missing required attributes']));
-  }
+  const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
 
-  if (request.body.tags.length > constants.MAX_NUMBER_OF_TAGS) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'Too many tags have been submitted', ['Too many tags have been submitted']));
-  }
+  BookmarkInputValidator.validateBookmarkInputForAdmin(request, response, bookmark);
 
-  const descriptionIsTooLong = request.body.description.length > constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION;
-  if (descriptionIsTooLong) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed',
-        ['The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed']));
-  }
-
-  if (request.body.description) {
-    const descriptionHasTooManyLines = request.body.description.split('\n').length > constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION;
-    if (descriptionHasTooManyLines) {
-      return response
-        .status(HttpStatus.BAD_REQUEST)
-        .send(new AppError(HttpStatus.BAD_REQUEST, 'The description hast too many lines. Only ' + constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION + ' allowed',
-          ['The description hast too many lines. Only ' + constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION + ' allowed']));
-    }
-  }
-
-  if (!request.body.descriptionHtml) {
-    request.body.descriptionHtml = converter.makeHtml(request.body.description);
-  }
   try {
-    const bookmark = await Bookmark.findOneAndUpdate(
+    const updatedBookmark = await Bookmark.findOneAndUpdate(
       {
         _id: request.params.bookmarkId
       },
-      request.body,
+      bookmark,
       {new: true}
     );
 
-    const bookmarkNotFound = !bookmark;
+    const bookmarkNotFound = !updatedBookmark;
     if (bookmarkNotFound) {
       return response
         .status(HttpStatus.NOT_FOUND)
@@ -272,7 +216,7 @@ adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), 
     } else {
       response
         .status(200)
-        .send(bookmark);
+        .send(updatedBookmark);
     }
   } catch (err) {
     if (err.name === 'MongoError' && err.code === 11000) {
@@ -284,12 +228,12 @@ adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), 
       .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown Server Error', ['Unknown server error when updating bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId]));
   }
-});
+}));
 
 /*
 * DELETE bookmark for by bookmarkId
 */
-adminRouter.delete('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), async (request, response) => {
+adminRouter.delete('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
   try {
     const bookmark = await Bookmark.findOneAndRemove({
       _id: request.params.bookmarkId,
@@ -313,14 +257,16 @@ adminRouter.delete('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'
       .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown server error',
         ['Unknown server error when trying to delete bookmark with id ' + request.params.bookmarkId]));
   }
-});
+}));
 
 /*
 * DELETE bookmarks
 * either by providing the location (for example to clean up spam)
 * or userId (deletes all bookmarks submitted by the user)
+*
+* TO DO - assign to next for next deletion, instead of the filte logic - is cleaner
 */
-adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), async (request, response) => {
+adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
   try {
     let filter = {};
     if (request.query.location) {
@@ -344,7 +290,7 @@ adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), async (re
       .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown server error',
         ['Unknown server error when trying to delete bookmarks']));
   }
-});
+}));
 
 
 module.exports = adminRouter;
