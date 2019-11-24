@@ -12,6 +12,7 @@ const adminRouter = require('./routes/admin/admin');
 const publicBookmarksRouter = require('./routes/public-bookmarks');
 const AppError = require('./models/error');
 const ValidationError = require('./models/validation.error');
+const NotFoundError = require('./models/not-found.error');
 const UseridTokenValidationError = require('./routes/users/userid-validation.error');
 
 const MyError = require('./models/myerror');
@@ -104,25 +105,62 @@ if (app.get('env') === 'development') {
   });
 }
 
-// production error handler
-// no stacktraces leaked to user
-app.use(function (err, req, res, next) {
-  if (res.headersSent) {
-    return next(err)
+app.use(function handleNotFoundError(error, req, res, next) {
+  if (error instanceof NotFoundError) {
+   return res.status(HttpStatus.NOT_FOUND).send({
+      message: err.message,
+      error: {}
+    });
   }
-  if (err instanceof UseridTokenValidationError) {
+  next(error);
+});
+
+app.use(function handleUserIdValidationError(error, req, res, next) {
+  if (error instanceof UseridTokenValidationError) {
     res.status(HttpStatus.UNAUTHORIZED);
     return res.send({
       httpStatus: HttpStatus.UNAUTHORIZED,
-      message: err.message
+      message: error.message
     });
-  } else if (err instanceof ValidationError) {
-    res.status(HttpStatus.BAD_REQUEST);
-    return res.send(err);
+  }
+  next(error);
+});
+
+app.use(function handleUserIdValidationError(error, req, res, next) {
+  if (error instanceof ValidationError) {
+    return res.status(HttpStatus.BAD_REQUEST).send(error);
+  }
+  next(error);
+});
+
+app.use(function handleDatabaseError(error, req, res, next) {
+  if (error instanceof MongoError) {
+    if (error.code === 11000) {
+      return response
+        .status(HttpStatus.CONFLICT)
+        .json({
+          type: 'MongoError',
+          message: error.message
+        });
+    } else {
+      return res.status(503).json({
+        type: 'MongoError',
+        message: error.message
+      });
+    }
+  }
+  next(error);
+});
+
+// production error handler
+// no stacktraces leaked to user
+app.use(function (error, req, res, next) {
+  if (res.headersSent) {
+    return next(error)
   } else {
-    res.status(err.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    res.status(error.status || HttpStatus.INTERNAL_SERVER_ERROR);
     res.send({
-      message: err.message,
+      message: error.message,
       error: {}
     });
   }
