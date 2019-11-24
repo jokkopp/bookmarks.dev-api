@@ -18,16 +18,16 @@ router.get('/', async (req, res) => {
   try {
     const searchText = req.query.q;
     const limit = parseInt(req.query.limit);
-    if ( searchText ) {
+    if (searchText) {
       const bookmarks = await bookmarksSearchService.findBookmarks(searchText, limit, constants.DOMAIN_PUBLIC, null);
 
       res.send(bookmarks);
-    } else if ( req.query.location ) {
+    } else if (req.query.location) {
       const bookmark = await Bookmark.findOne({
         'shared': true,
         location: req.query.location
       }).lean().exec();
-      if ( !bookmark ) {
+      if (!bookmark) {
         return res.status(HttpStatus.NOT_FOUND).send("Bookmark not found");
       }
       res.send(bookmark);
@@ -44,22 +44,19 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/tagged/:tag', async (req, res) => {
-  try {
-    const orderByFilter = req.query.orderBy === 'STARS' ? {likes: -1} : {createdAt: -1};
+  const orderByFilter = req.query.orderBy === 'STARS' ? {likes: -1} : {createdAt: -1};
 
-    const bookmarks = await Bookmark.find({
-      shared: true,
-      tags: req.params.tag
-    })
-      .sort(orderByFilter)
-      .limit(MAX_NUMBER_RETURNED_RESULTS)
-      .lean()
-      .exec();
+  const bookmarks = await Bookmark.find({
+    shared: true,
+    tags: req.params.tag
+  })
+    .sort(orderByFilter)
+    .limit(MAX_NUMBER_RETURNED_RESULTS)
+    .lean()
+    .exec();
 
-    res.send(bookmarks);
-  } catch (err) {
-    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(err);
-  }
+  return res.send(bookmarks);
+
 });
 
 /**
@@ -69,11 +66,11 @@ router.get('/tagged/:tag', async (req, res) => {
  */
 function formatDuration(duration) {
   duration = duration.substring(2); // get rid of 'PT'
-  if(duration.indexOf('M') >= 0 && duration.indexOf('H')== -1) {
+  if (duration.indexOf('M') >= 0 && duration.indexOf('H') == -1) {
     return duration.substring(0, duration.indexOf('M')) + 'min';
   }
 
-  if(duration.indexOf('M') >= 0 && duration.indexOf('H') >= 0) {
+  if (duration.indexOf('M') >= 0 && duration.indexOf('H') >= 0) {
     const hours = duration.substring(0, duration.indexOf('H')) + 'h';
     const minutes = duration.substring(duration.indexOf('H') + 1, duration.indexOf('M')) + 'min';
     return hours + ':' + minutes;
@@ -85,10 +82,10 @@ function formatDuration(duration) {
 
 /* GET title of bookmark given its url */
 router.get('/scrape', function (req, res) {
-  if ( req.query.url ) {
+  if (req.query.url) {
     const bookmarkUrl = req.query.url;
     request(bookmarkUrl, function (error, response, body) {
-      if ( !error && response.statusCode == 200 ) {
+      if (!error && response.statusCode == 200) {
         const $ = cheerio.load(body);
         const webpageTitle = $("title").text();
         const metaDescription = $('meta[name=description]').attr("content");
@@ -100,7 +97,7 @@ router.get('/scrape', function (req, res) {
         }
         let youtubeVideoId = req.query.youtubeVideoId;
 
-        if(youtubeVideoId !== 'null') {
+        if (youtubeVideoId !== 'null') {
           superagent
             .get('https://www.googleapis.com/youtube/v3/videos')
             .query({id: youtubeVideoId})
@@ -118,7 +115,7 @@ router.get('/scrape', function (req, res) {
               res.send(webpage);
             })
             .catch(err => {
-               console.error(err);
+              console.error(err);
             });
         } else {
           res.send(webpage);
@@ -131,10 +128,10 @@ router.get('/scrape', function (req, res) {
 /* GET bookmark by id. */
 router.get('/:id', function (req, res) {
   Bookmark.findById(req.params.id, function (err, bookmark) {
-    if ( err ) {
+    if (err) {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(err);
     }
-    if ( !bookmark ) {
+    if (!bookmark) {
       return res.status(HttpStatus.NOT_FOUND).send("Bookmark not found");
     }
     res.send(bookmark);
@@ -146,29 +143,29 @@ router.get('/:id', function (req, res) {
 /* TODO - maybe implement later advancedSearch */
 router.get('/advanced-search', function (req, res) {
   var regexSearch = [];
-  if ( req.query.name ) {
+  if (req.query.name) {
     var regExpName = new RegExp(req.query.category, 'i');
     regexSearch.push({'name': {$regex: regExpName}});
     regexSearch.push({'description': {$regex: regExpName}});
   }
-  if ( req.query.category ) {
+  if (req.query.category) {
     var regExpCategory = new RegExp(req.query.category, 'i');
     regexSearch.push({'category': {$regex: regExpCategory}});
   }
-  if ( req.query.tag ) {
+  if (req.query.tag) {
     var regExpTag = new RegExp(req.query.tag, 'i');
     regexSearch.push({'tags': {$regex: regExpTag}});
   }
-  if ( regexSearch.length > 0 ) {
+  if (regexSearch.length > 0) {
     Bookmark.find().or(regexSearch, function (err, bookmarks) {
-      if ( err ) {
+      if (err) {
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(err);
       }
       res.send(bookmarks);
     });
   } else {//no filter - all bookmarks
     Bookmark.find({}, function (err, bookmarks) {
-      if ( err ) {
+      if (err) {
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(err);
       }
       res.send(bookmarks);

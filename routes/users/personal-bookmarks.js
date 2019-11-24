@@ -30,7 +30,6 @@ const keycloak = new Keycloak({scope: 'openid'}, config.keycloak);
 personalBookmarksRouter.use(keycloak.middleware());
 
 
-
 /**
  * CREATE bookmark for user
  */
@@ -55,25 +54,12 @@ personalBookmarksRouter.post('/', keycloak.protect(), AsyncWrapper.wrapAsync(asy
     }
   }
 
-  try {
-    let newBookmark = await bookmark.save();
+  let newBookmark = await bookmark.save();
 
-    response
-      .set('Location', `${config.basicApiUrl}private/${request.params.userId}/bookmarks/${newBookmark.id}`)
-      .status(HttpStatus.CREATED)
-      .send({response: 'Bookmark created for userId ' + request.params.userId});
-
-  } catch (err) {
-    const duplicateKeyinMongoDb = err.name === 'MongoError' && err.code === 11000;
-    if (duplicateKeyinMongoDb) {
-      return response
-        .status(HttpStatus.CONFLICT)
-        .send(new AppError(HttpStatus.CONFLICT, 'Duplicate key', [err.message]));
-    }
-    response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(err);
-  }
+  response
+    .set('Location', `${config.basicApiUrl}private/${request.params.userId}/bookmarks/${newBookmark.id}`)
+    .status(HttpStatus.CREATED)
+    .send({response: 'Bookmark created for userId ' + request.params.userId});
 
 }));
 
@@ -82,33 +68,30 @@ personalBookmarksRouter.get('/', keycloak.protect(), AsyncWrapper.wrapAsync(asyn
 
   UserIdValidator.validateUserId(request);
 
-  try {
-    const searchText = request.query.q;
-    const limit = parseInt(request.query.limit);
+  const searchText = request.query.q;
+  const limit = parseInt(request.query.limit);
 
-    if (searchText) {
-      const bookmarks = await bookmarksSearchService.findBookmarks(searchText, limit, constants.DOMAIN_PERSONAL, request.params.userId);
+  if (searchText) {
+    const bookmarks = await bookmarksSearchService.findBookmarks(searchText, limit, constants.DOMAIN_PERSONAL, request.params.userId);
 
-      return response.send(bookmarks);
-    } else if (request.query.location) {
-      const bookmark = await Bookmark.findOne({
-        userId: request.params.userId,
-        location: request.query.location
-      }).lean().exec();
-      if (!bookmark) {
-        return response.status(HttpStatus.NOT_FOUND).send("Bookmark not found");
-      }
-      return response.send(bookmark);
-    } else {//no filter - latest bookmarks added to the platform
-      const bookmarks = await Bookmark.find({userId: request.params.userId})
-        .sort({lastAccessedAt: -1})
-        .limit(100);
-
-      return response.send(bookmarks);
+    return response.send(bookmarks);
+  } else if (request.query.location) {
+    const bookmark = await Bookmark.findOne({
+      userId: request.params.userId,
+      location: request.query.location
+    }).lean().exec();
+    if (!bookmark) {
+      return response.status(HttpStatus.NOT_FOUND).send("Bookmark not found");
     }
-  } catch (err) {
-    return response.status(HttpStatus.INTERNAL_SERVER_ERROR).send(err);
+    return response.send(bookmark);
+  } else {//no filter - latest bookmarks added to the platform
+    const bookmarks = await Bookmark.find({userId: request.params.userId})
+      .sort({lastAccessedAt: -1})
+      .limit(100);
+
+    return response.send(bookmarks);
   }
+
 }));
 
 /* GET tags used by user */
@@ -116,19 +99,15 @@ personalBookmarksRouter.get('/tags', keycloak.protect(), AsyncWrapper.wrapAsync(
 
   UserIdValidator.validateUserId(request);
 
-  try {
-    const tags = await Bookmark.distinct("tags",
-      {
-        $or: [
-          {userId: request.params.userId},
-          {shared: true}
-        ]
-      }); // sort does not work with distinct in mongoose - https://mongoosejs.com/docs/api.html#query_Query-sort
+  const tags = await Bookmark.distinct("tags",
+    {
+      $or: [
+        {userId: request.params.userId},
+        {shared: true}
+      ]
+    }); // sort does not work with distinct in mongoose - https://mongoosejs.com/docs/api.html#query_Query-sort
 
-    response.send(tags);
-  } catch (err) {
-    return response.status(HttpStatus.INTERNAL_SERVER_ERROR).send(err);
-  }
+  response.send(tags);
 }));
 
 
@@ -137,28 +116,21 @@ personalBookmarksRouter.get('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
 
   UserIdValidator.validateUserId(request);
 
-  try {
-    const bookmark = await Bookmark.findOne({
-      _id: request.params.bookmarkId,
-      userId: request.params.userId
-    });
+  const bookmark = await Bookmark.findOne({
+    _id: request.params.bookmarkId,
+    userId: request.params.userId
+  });
 
-    if (!bookmark) {
-      return response
-        .status(HttpStatus.NOT_FOUND)
-        .send(new AppError(
-          'Not Found Error',
-          ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId + ' not found']
-          )
-        );
-    } else {
-      return response.status(HttpStatus.OK).send(bookmark);
-    }
-  } catch (err) {
+  if (!bookmark) {
     return response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(new AppError('Unknown server error',
-        ['Unknown server error when trying to delete bookmark with id ' + request.params.bookmarkId]));
+      .status(HttpStatus.NOT_FOUND)
+      .send(new AppError(
+        'Not Found Error',
+        ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId + ' not found']
+        )
+      );
+  } else {
+    return response.status(HttpStatus.OK).send(bookmark);
   }
 }));
 
@@ -187,36 +159,24 @@ personalBookmarksRouter.put('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
           ['A public bookmark with this location is already present']));
     }
   }
+  const updatedBookmark = await Bookmark.findOneAndUpdate(
+    {
+      _id: request.params.bookmarkId,
+      userId: request.params.userId
+    },
+    bookmark,
+    {new: true}
+  );
 
-  try {
-    const updatedBookmark = await Bookmark.findOneAndUpdate(
-      {
-        _id: request.params.bookmarkId,
-        userId: request.params.userId
-      },
-      bookmark,
-      {new: true}
-    );
-
-    const bookmarkNotFound = !updatedBookmark;
-    if (bookmarkNotFound) {
-      return response
-        .status(HttpStatus.NOT_FOUND)
-        .send(new AppError(HttpStatus.NOT_FOUND, 'Not Found Error', ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId + ' not found']));
-    } else {
-      return response
-        .status(200)
-        .send(updatedBookmark);
-    }
-  } catch (err) {
-    if (err.name === 'MongoError' && err.code === 11000) {
-      return response
-        .status(HttpStatus.CONFLICT)
-        .send(new AppError('Duplicate key', [err.message]));
-    }
+  const bookmarkNotFound = !updatedBookmark;
+  if (bookmarkNotFound) {
     return response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown Server Error', ['Unknown server error when updating bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId]));
+      .status(HttpStatus.NOT_FOUND)
+      .send(new AppError(HttpStatus.NOT_FOUND, 'Not Found Error', ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId + ' not found']));
+  } else {
+    return response
+      .status(200)
+      .send(updatedBookmark);
   }
 }));
 
@@ -228,44 +188,38 @@ personalBookmarksRouter.delete('/:bookmarkId', keycloak.protect(), AsyncWrapper.
   UserIdValidator.validateIsAdminOrUserId(request);
 
   const bookmarkId = request.params.bookmarkId;
-  try {
-    const bookmark = await Bookmark.findOneAndRemove({
-      _id: bookmarkId,
-      userId: request.params.userId
-    });
+  const bookmark = await Bookmark.findOneAndRemove({
+    _id: bookmarkId,
+    userId: request.params.userId
+  });
 
-    if (!bookmark) {
-      return response
-        .status(HttpStatus.NOT_FOUND)
-        .send(new AppError(
-          HttpStatus.NOT_FOUND,
-          'Not Found Error',
-          ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + bookmarkId + ' not found']
-          )
-        );
-    } else {
-      await User.update(
-        {},
-        {
-          $pull: {
-            readLater: bookmarkId,
-            likes: bookmarkId,
-            pinned: bookmarkId,
-            history: bookmarkId,
-            favorites: bookmarkId
-          }
-        },
-        {multi: true}
-      );
-
-      return response.status(HttpStatus.NO_CONTENT).send();
-    }
-  } catch (err) {
+  if (!bookmark) {
     return response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown server error',
-        ['Unknown server error when trying to delete bookmark with id ' + bookmarkId]));
+      .status(HttpStatus.NOT_FOUND)
+      .send(new AppError(
+        HttpStatus.NOT_FOUND,
+        'Not Found Error',
+        ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + bookmarkId + ' not found']
+        )
+      );
+  } else {
+    await User.update(
+      {},
+      {
+        $pull: {
+          readLater: bookmarkId,
+          likes: bookmarkId,
+          pinned: bookmarkId,
+          history: bookmarkId,
+          favorites: bookmarkId
+        }
+      },
+      {multi: true}
+    );
+
+    return response.status(HttpStatus.NO_CONTENT).send();
   }
+
 }));
 
 /*
@@ -276,31 +230,23 @@ personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(a
   UserIdValidator.validateIsAdminOrUserId(request);
 
   const location = request.query.location;
-  try {
-    const bookmark = await Bookmark.findOneAndRemove({
-      location: location,
-      userId: request.params.userId
-    });
+  const bookmark = await Bookmark.findOneAndRemove({
+    location: location,
+    userId: request.params.userId
+  });
 
-    if (!bookmark) {
-      return response
-        .status(HttpStatus.NOT_FOUND)
-        .send(new AppError(
-          HttpStatus.NOT_FOUND,
-          'Not Found Error',
-          ['Bookmark NOT_FOUND for user id ' + request.params.userId + ' and location ' + location]
-          )
-        );
-    }
-
-    return response.status(HttpStatus.NO_CONTENT).send();
-
-  } catch (err) {
+  if (!bookmark) {
     return response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown server error',
-        ['Unknown server error when trying to delete bookmark with location ' + location]));
+      .status(HttpStatus.NOT_FOUND)
+      .send(new AppError(
+        HttpStatus.NOT_FOUND,
+        'Not Found Error',
+        ['Bookmark NOT_FOUND for user id ' + request.params.userId + ' and location ' + location]
+        )
+      );
   }
+
+  return response.status(HttpStatus.NO_CONTENT).send();
 }));
 
 module.exports = personalBookmarksRouter;

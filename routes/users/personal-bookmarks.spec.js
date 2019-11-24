@@ -309,6 +309,7 @@ describe('Personal Bookmarks tests', function () {
       it('should fail trying to UPDATE bookmark without a location', async function () {
         let bookmarkWithoutLocation = JSON.parse(JSON.stringify(createdBookmark));
         bookmarkWithoutLocation.location = '';
+
         const response = await request(app)
           .put(`${baseApiUrlUnderTest}${testUserId}/bookmarks/${createdBookmark._id}`)
           .set('Authorization', bearerToken)
