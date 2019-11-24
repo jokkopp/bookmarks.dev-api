@@ -12,6 +12,7 @@ const AsyncWrapper = require('../../common/async-wrapper');
 
 const AppError = require('../../models/error');
 const ValidationError = require('../../models/validation.error');
+const NotFoundError = require('../../models/not-found.error');
 
 const common = require('../../common/config');
 const config = common.config();
@@ -122,13 +123,7 @@ personalBookmarksRouter.get('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
   });
 
   if (!bookmark) {
-    return response
-      .status(HttpStatus.NOT_FOUND)
-      .send(new AppError(
-        'Not Found Error',
-        ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId + ' not found']
-        )
-      );
+    throw new NotFoundError(`Bookmark NOT_FOUND the userId: ${request.params.userId} AND id: ${request.params.bookmarkId}`);
   } else {
     return response.status(HttpStatus.OK).send(bookmark);
   }
@@ -170,12 +165,10 @@ personalBookmarksRouter.put('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
 
   const bookmarkNotFound = !updatedBookmark;
   if (bookmarkNotFound) {
-    return response
-      .status(HttpStatus.NOT_FOUND)
-      .send(new AppError(HttpStatus.NOT_FOUND, 'Not Found Error', ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId + ' not found']));
+    throw new NotFoundError('Bookmark NOT_FOUND the id: ' + request.params.bookmarkId + ' AND location: ' + bookmark.location);
   } else {
     return response
-      .status(200)
+      .status(HttpStatus.OK)
       .send(updatedBookmark);
   }
 }));
@@ -194,14 +187,7 @@ personalBookmarksRouter.delete('/:bookmarkId', keycloak.protect(), AsyncWrapper.
   });
 
   if (!bookmark) {
-    return response
-      .status(HttpStatus.NOT_FOUND)
-      .send(new AppError(
-        HttpStatus.NOT_FOUND,
-        'Not Found Error',
-        ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + bookmarkId + ' not found']
-        )
-      );
+    throw new NotFoundError('Bookmark NOT_FOUND the id: ' + request.params.bookmarkId);
   } else {
     await User.update(
       {},
@@ -236,14 +222,7 @@ personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(a
   });
 
   if (!bookmark) {
-    return response
-      .status(HttpStatus.NOT_FOUND)
-      .send(new AppError(
-        HttpStatus.NOT_FOUND,
-        'Not Found Error',
-        ['Bookmark NOT_FOUND for user id ' + request.params.userId + ' and location ' + location]
-        )
-      );
+    throw new NotFoundError(`Bookmark NOT_FOUND the userId: ${request.params.userId} AND location: ${location}`);
   }
 
   return response.status(HttpStatus.NO_CONTENT).send();

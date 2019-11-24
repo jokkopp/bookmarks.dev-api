@@ -235,7 +235,7 @@ describe('Personal Bookmarks tests', function () {
         .send(bookmarkExample);
 
       expect(response.statusCode).to.equal(HttpStatus.NOT_FOUND);
-      expect(response.body.title).to.equal('Not Found Error');
+      expect(response.body.message).to.equal(`Bookmark NOT_FOUND the id: ${inexistentBookmarkId} AND location: ${bookmarkExample.location}`);
     });
 
     it('should fail trying to delete inexistent bookmark', async function () {
@@ -246,7 +246,7 @@ describe('Personal Bookmarks tests', function () {
         .set('Authorization', bearerToken);
 
       expect(response.statusCode).to.equal(HttpStatus.NOT_FOUND);
-      expect(response.body.title).to.equal('Not Found Error');
+      expect(response.body.message).to.equal(`Bookmark NOT_FOUND the id: ${inexistentBookmarkId}`);
     });
 
   });

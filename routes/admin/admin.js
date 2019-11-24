@@ -183,9 +183,7 @@ adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), 
   if (bookmarkNotFound) {
     throw new NotFoundError('Bookmark with the id ' + request.params.bookmarkId + ' not found');
   } else {
-    response
-      .status(200)
-      .send(updatedBookmark);
+    return response.status(HttpStatus.OK).send(updatedBookmark);
   }
 }));
 

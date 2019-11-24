@@ -10,12 +10,9 @@ const versionRouter = require('./routes/version');
 const usersRouter = require('./routes/users/users');
 const adminRouter = require('./routes/admin/admin');
 const publicBookmarksRouter = require('./routes/public-bookmarks');
-const AppError = require('./models/error');
 const ValidationError = require('./models/validation.error');
 const NotFoundError = require('./models/not-found.error');
 const UseridTokenValidationError = require('./routes/users/userid-validation.error');
-
-const MyError = require('./models/myerror');
 
 const fs = require('fs-extra');
 const rfs = require('rotating-file-stream');
@@ -108,7 +105,7 @@ if (app.get('env') === 'development') {
 app.use(function handleNotFoundError(error, req, res, next) {
   if (error instanceof NotFoundError) {
    return res.status(HttpStatus.NOT_FOUND).send({
-      message: err.message,
+      message: error.message,
       error: {}
     });
   }
