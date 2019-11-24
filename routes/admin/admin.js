@@ -6,6 +6,7 @@ const Keycloak = require('keycloak-connect');
 const Bookmark = require('../../models/bookmark');
 const bookmarkHelper = require('../../common/bookmark-helper');
 const AppError = require('../../models/error');
+const NotFoundError = require('../../models/not-found.error');
 
 const common = require('../../common/config');
 const config = common.config();
@@ -26,47 +27,36 @@ adminRouter.use(keycloak.middleware());
 
 /* GET all bookmarks */
 adminRouter.get('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
-  try {
-    let bookmarks;
-    let filter = {};
-    if(request.query.public === 'true') {
-      filter.shared = true;
-    }
-    if (request.query.location) {
-      filter.location = request.query.location;
-    }
-    if (request.query.userId) {
-      filter.userId = request.query.userId;
-    }
-    bookmarks = await Bookmark.find(filter).sort({createdAt: -1}).lean().exec();
-
-    response.send(bookmarks);
-  } catch (err) {
-    return response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(err);
+  let bookmarks;
+  let filter = {};
+  if (request.query.public === 'true') {
+    filter.shared = true;
   }
+  if (request.query.location) {
+    filter.location = request.query.location;
+  }
+  if (request.query.userId) {
+    filter.userId = request.query.userId;
+  }
+  bookmarks = await Bookmark.find(filter).sort({createdAt: -1}).lean().exec();
+
+  response.send(bookmarks);
 }));
 
 
 adminRouter.get('/tags', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
-  try {
-    const tags = await Bookmark.aggregate(
-      [
-        {$match: {shared: true}},
-        {$project: {"tags": 1}},
-        {$unwind: "$tags"},
-        {$group: {"_id": "$tags", "count": {"$sum": 1}}},
-        {$sort: {count: -1}}
-      ]
-    );
+  const tags = await Bookmark.aggregate(
+    [
+      {$match: {shared: true}},
+      {$project: {"tags": 1}},
+      {$unwind: "$tags"},
+      {$group: {"_id": "$tags", "count": {"$sum": 1}}},
+      {$sort: {count: -1}}
+    ]
+  );
 
-    response.send(tags);
-  } catch (err) {
-    return response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(err);
-  }
+  response.send(tags);
+
 }));
 
 
@@ -79,40 +69,35 @@ adminRouter.get('/tags', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrap
  *
  */
 adminRouter.get('/bookmarks/latest-entries', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (req, res) => {
-  try {
-    if (req.query.since) {
-      const fromDate = new Date(parseFloat(req.query.since, 0));
-      const toDate = req.query.to ? new Date(parseFloat(req.query.to, 0)) : new Date();
-      if (fromDate > toDate) {
-        return res
-          .status(HttpStatus.BAD_REQUEST)
-          .send(new AppError(HttpStatus.BAD_REQUEST, 'timing query parameters values', ['<Since> param value must be before <to> parameter value']));
-      }
-      const bookmarks = await Bookmark.find(
-        {
-          'shared': true,
-          createdAt: {
-            $gte: fromDate,
-            $lte: toDate
-          }
-
-        }).sort({createdAt: 'desc'}).lean().exec();
-
-      res.send(bookmarks);
-    } else {
-      const numberOfDaysToLookBack = req.query.days ? req.query.days : 7;
-
-      const bookmarks = await Bookmark.find(
-        {
-          'shared': true,
-          createdAt: {$gte: new Date((new Date().getTime() - (numberOfDaysToLookBack * 24 * 60 * 60 * 1000)))}
-        }).sort({createdAt: 'desc'}).lean().exec();
-
-      res.send(bookmarks);
+  if (req.query.since) {
+    const fromDate = new Date(parseFloat(req.query.since, 0));
+    const toDate = req.query.to ? new Date(parseFloat(req.query.to, 0)) : new Date();
+    if (fromDate > toDate) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .send(new AppError(HttpStatus.BAD_REQUEST, 'timing query parameters values', ['<Since> param value must be before <to> parameter value']));
     }
+    const bookmarks = await Bookmark.find(
+      {
+        'shared': true,
+        createdAt: {
+          $gte: fromDate,
+          $lte: toDate
+        }
 
-  } catch (err) {
-    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(err);
+      }).sort({createdAt: 'desc'}).lean().exec();
+
+    res.send(bookmarks);
+  } else {
+    const numberOfDaysToLookBack = req.query.days ? req.query.days : 7;
+
+    const bookmarks = await Bookmark.find(
+      {
+        'shared': true,
+        createdAt: {$gte: new Date((new Date().getTime() - (numberOfDaysToLookBack * 24 * 60 * 60 * 1000)))}
+      }).sort({createdAt: 'desc'}).lean().exec();
+
+    res.send(bookmarks);
   }
 }));
 
@@ -153,12 +138,12 @@ adminRouter.post('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrappe
 
   BookmarkInputValidator.validateBookmarkInputForAdmin(request, response, bookmark);
 
-  if ( bookmark.shared ) {
+  if (bookmark.shared) {
     const existingBookmark = await Bookmark.findOne({
       shared: true,
       location: bookmark.location
     });
-    if( existingBookmark ) {
+    if (existingBookmark) {
       return response
         .status(HttpStatus.CONFLICT)
         .send(new AppError(HttpStatus.CONFLICT, 'A public bookmark with this location is already present',
@@ -166,25 +151,12 @@ adminRouter.post('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrappe
     }
   }
 
-  try {
-    let newBookmark = await bookmark.save();
+  let newBookmark = await bookmark.save();
 
-    response
-      .set('Location', `${config.basicApiUrl}private/${request.params.userId}/bookmarks/${newBookmark.id}`)
-      .status(HttpStatus.CREATED)
-      .send({response: 'Bookmark created for userId ' + request.params.userId});
-
-  } catch (err) {
-    const duplicateKeyinMongoDb = err.name === 'MongoError' && err.code === 11000;
-    if (duplicateKeyinMongoDb) {
-      return response
-        .status(HttpStatus.CONFLICT)
-        .send(new AppError(HttpStatus.CONFLICT, 'Duplicate key', [err.message]));
-    }
-    response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(err);
-  }
+  response
+    .set('Location', `${config.basicApiUrl}private/${request.params.userId}/bookmarks/${newBookmark.id}`)
+    .status(HttpStatus.CREATED)
+    .send({response: 'Bookmark created for userId ' + request.params.userId});
 
 }));
 
@@ -199,34 +171,21 @@ adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), 
 
   BookmarkInputValidator.validateBookmarkInputForAdmin(request, response, bookmark);
 
-  try {
-    const updatedBookmark = await Bookmark.findOneAndUpdate(
-      {
-        _id: request.params.bookmarkId
-      },
-      bookmark,
-      {new: true}
-    );
+  const updatedBookmark = await Bookmark.findOneAndUpdate(
+    {
+      _id: request.params.bookmarkId
+    },
+    bookmark,
+    {new: true}
+  );
 
-    const bookmarkNotFound = !updatedBookmark;
-    if (bookmarkNotFound) {
-      return response
-        .status(HttpStatus.NOT_FOUND)
-        .send(new AppError(HttpStatus.NOT_FOUND, 'Not Found Error', ['Bookmark with bookmark id ' + request.params.bookmarkId + ' not found']));
-    } else {
-      response
-        .status(200)
-        .send(updatedBookmark);
-    }
-  } catch (err) {
-    if (err.name === 'MongoError' && err.code === 11000) {
-      return response
-        .status(HttpStatus.CONFLICT)
-        .send(new AppError(HttpStatus.CONFLICT, 'Duplicate key', [err.message]));
-    }
-    return response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown Server Error', ['Unknown server error when updating bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId]));
+  const bookmarkNotFound = !updatedBookmark;
+  if (bookmarkNotFound) {
+    throw new NotFoundError('Bookmark with the id ' + request.params.bookmarkId + ' not found');
+  } else {
+    response
+      .status(200)
+      .send(updatedBookmark);
   }
 }));
 
@@ -234,28 +193,21 @@ adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), 
 * DELETE bookmark for by bookmarkId
 */
 adminRouter.delete('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
-  try {
-    const bookmark = await Bookmark.findOneAndRemove({
-      _id: request.params.bookmarkId,
-    });
+  const bookmark = await Bookmark.findOneAndRemove({
+    _id: request.params.bookmarkId,
+  });
 
-    if (!bookmark) {
-      return response
-        .status(HttpStatus.NOT_FOUND)
-        .send(new AppError(
-          HttpStatus.NOT_FOUND,
-          'Not Found Error',
-          ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId + ' not found']
-          )
-        );
-    } else {
-      response.status(HttpStatus.NO_CONTENT).send('Bookmark successfully deleted');
-    }
-  } catch (err) {
+  if (!bookmark) {
     return response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown server error',
-        ['Unknown server error when trying to delete bookmark with id ' + request.params.bookmarkId]));
+      .status(HttpStatus.NOT_FOUND)
+      .send(new AppError(
+        HttpStatus.NOT_FOUND,
+        'Not Found Error',
+        ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId + ' not found']
+        )
+      );
+  } else {
+    response.status(HttpStatus.NO_CONTENT).send('Bookmark successfully deleted');
   }
 }));
 
@@ -267,29 +219,23 @@ adminRouter.delete('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'
 * TO DO - assign to next for next deletion, instead of the filte logic - is cleaner
 */
 adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
-  try {
-    let filter = {};
-    if (request.query.location) {
-      filter.location = request.query.location;
-    }
-    if (request.query.userId) {
-      filter.userId = request.query.userId;
-    }
-    if(filter === {}){
-      return response
-        .status(HttpStatus.BAD_REQUEST)
-        .send(new AppError(HttpStatus.BAD_REQUEST, 'You can either delete bookmarks by location or userId - at least one of them mandatory',
-          ['You can either delete bookmarks by location or userId - at least one of them mandatory']));
-    }
 
-    await Bookmark.deleteMany(filter);
-    response.status(HttpStatus.NO_CONTENT).send('Bookmarks successfully deleted');
-  } catch (err) {
-    return response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown server error',
-        ['Unknown server error when trying to delete bookmarks']));
+  let filter = {};
+  if (request.query.location) {
+    filter.location = request.query.location;
   }
+  if (request.query.userId) {
+    filter.userId = request.query.userId;
+  }
+  if (filter === {}) {
+    return response
+      .status(HttpStatus.BAD_REQUEST)
+      .send(new AppError(HttpStatus.BAD_REQUEST, 'You can either delete bookmarks by location or userId - at least one of them mandatory',
+        ['You can either delete bookmarks by location or userId - at least one of them mandatory']));
+  }
+
+  await Bookmark.deleteMany(filter);
+  response.status(HttpStatus.NO_CONTENT).send('Bookmarks successfully deleted');
 }));
 
 
