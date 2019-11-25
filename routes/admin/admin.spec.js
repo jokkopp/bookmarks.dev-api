@@ -320,19 +320,14 @@ describe('Admin API Tests', function () {
 
     });
 
-    it('should fail trying to add bookmark with existent location for same user', function (done) {
-      request(app)
+    it('should fail trying to add bookmark with existent location for same user', async function () {
+      const response = await request(app)
         .post(`${baseApiUnderTestUrl}`)
         .set('Authorization', adminBearerToken)
-        .send(bookmarkExample)
-        .end(function (error, response) {
-          if (error) {
-            return done(error);
-          }
-          expect(response.statusCode).to.equal(HttpStatus.CONFLICT);
-          expect(response.body.title).to.equal('A public bookmark with this location is already present');
-          done();
-        });
+        .send(bookmarkExample);
+
+      expect(response.statusCode).to.equal(HttpStatus.CONFLICT);
+      expect(response.body.message).to.equal(`A public bookmark with this location is already present - location: ${bookmarkExample.location}`);
     });
 
 
@@ -468,103 +463,103 @@ describe('Admin API Tests', function () {
 
       expect(readResponse.statusCode).to.equal(HttpStatus.OK);
       expect(readResponse.body.name).to.equal(bookmarkExample.name + ' rocks');
+    });
+
+    it('should succeed deleting created bookmark', async function () {
+      const response = await request(app)
+        .delete(`${baseApiUnderTestUrl}${createdBookmark._id}`)
+        .set('Authorization', adminBearerToken);
+
+      expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
+    });
+
+    it('should succeed creating example bookmark and deleting it by location', function (done) {
+      request(app)
+        .post(baseApiUnderTestUrl)
+        .set('Authorization', adminBearerToken)
+        .send(bookmarkExample)
+        .end(function (error, response) {
+          if (error) {
+            return done(error);
+          }
+          expect(response.statusCode).to.equal(HttpStatus.CREATED);
+          const isLocationHeaderPresent = response.header['location'] !== undefined;
+          expect(isLocationHeaderPresent).to.be.true;
+
+          request(app)
+            .delete(`${baseApiUnderTestUrl}`)
+            .query({location: bookmarkExample.location})
+            .set('Authorization', adminBearerToken)
+            .end(function (error, response) {
+              if (error) {
+                return done(error);
+              }
+              expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
+
+              done();
+            });
+        });
+    });
+
+    it('should succeed creating example bookmark and deleting it by userId', function (done) {
+      request(app)
+        .post(baseApiUnderTestUrl)
+        .set('Authorization', adminBearerToken)
+        .send(bookmarkExample)
+        .end(function (error, response) {
+          if (error) {
+            return done(error);
+          }
+          expect(response.statusCode).to.equal(HttpStatus.CREATED);
+          const isLocationHeaderPresent = response.header['location'] !== undefined;
+          expect(isLocationHeaderPresent).to.be.true;
+
+          request(app)
+            .delete(`${baseApiUnderTestUrl}`)
+            .query({userId: bookmarkExample.userId})
+            .set('Authorization', adminBearerToken)
+            .end(function (error, response) {
+              if (error) {
+                return done(error);
+              }
+              expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
+
+              done();
+            });
+        });
+    });
+
+    it('should succeed trying to delete non-existent bookmark', function (done) {
+      request(app)
+        .delete(`${baseApiUnderTestUrl}`)
+        .query({location: bookmarkExample.location})
+        .set('Authorization', adminBearerToken)
+        .end(function (error, response) {
+          if (error) {
+            return done(error);
+          }
+          expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
+
+          done();
+        });
+    });
+
+    it('should succeed trying to delete non-existent bookmark', function (done) {
+      request(app)
+        .delete(`${baseApiUnderTestUrl}`)
+        .query({userId: bookmarkExample.userId})
+        .set('Authorization', adminBearerToken)
+        .end(function (error, response) {
+          if (error) {
+            return done(error);
+          }
+          expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
+
+          done();
+        });
+    });
+
   });
-
-  it('should succeed deleting created bookmark', async function () {
-    const response = await request(app)
-      .delete(`${baseApiUnderTestUrl}${createdBookmark._id}`)
-      .set('Authorization', adminBearerToken);
-
-    expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
-  });
-
-  it('should succeed creating example bookmark and deleting it by location', function (done) {
-    request(app)
-      .post(baseApiUnderTestUrl)
-      .set('Authorization', adminBearerToken)
-      .send(bookmarkExample)
-      .end(function (error, response) {
-        if (error) {
-          return done(error);
-        }
-        expect(response.statusCode).to.equal(HttpStatus.CREATED);
-        const isLocationHeaderPresent = response.header['location'] !== undefined;
-        expect(isLocationHeaderPresent).to.be.true;
-
-        request(app)
-          .delete(`${baseApiUnderTestUrl}`)
-          .query({location: bookmarkExample.location})
-          .set('Authorization', adminBearerToken)
-          .end(function (error, response) {
-            if (error) {
-              return done(error);
-            }
-            expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
-
-            done();
-          });
-      });
-  });
-
-  it('should succeed creating example bookmark and deleting it by userId', function (done) {
-    request(app)
-      .post(baseApiUnderTestUrl)
-      .set('Authorization', adminBearerToken)
-      .send(bookmarkExample)
-      .end(function (error, response) {
-        if (error) {
-          return done(error);
-        }
-        expect(response.statusCode).to.equal(HttpStatus.CREATED);
-        const isLocationHeaderPresent = response.header['location'] !== undefined;
-        expect(isLocationHeaderPresent).to.be.true;
-
-        request(app)
-          .delete(`${baseApiUnderTestUrl}`)
-          .query({userId: bookmarkExample.userId})
-          .set('Authorization', adminBearerToken)
-          .end(function (error, response) {
-            if (error) {
-              return done(error);
-            }
-            expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
-
-            done();
-          });
-      });
-  });
-
-  it('should succeed trying to delete non-existent bookmark', function (done) {
-    request(app)
-      .delete(`${baseApiUnderTestUrl}`)
-      .query({location: bookmarkExample.location})
-      .set('Authorization', adminBearerToken)
-      .end(function (error, response) {
-        if (error) {
-          return done(error);
-        }
-        expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
-
-        done();
-      });
-  });
-
-  it('should succeed trying to delete non-existent bookmark', function (done) {
-    request(app)
-      .delete(`${baseApiUnderTestUrl}`)
-      .query({userId: bookmarkExample.userId})
-      .set('Authorization', adminBearerToken)
-      .end(function (error, response) {
-        if (error) {
-          return done(error);
-        }
-        expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
-
-        done();
-      });
-  });
-
-});
 
 
 })

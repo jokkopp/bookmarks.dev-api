@@ -6,6 +6,7 @@ const Bookmark = require('../models/bookmark');
 let validateBookmarkInput = function(request, response, bookmark) {
 
   let validationErrorMessages = validateInputExceptUserId(bookmark);
+
   if (bookmark.userId !== request.params.userId) {
     validationErrorMessages.push("The userId of the bookmark does not match the userId parameter");
   }

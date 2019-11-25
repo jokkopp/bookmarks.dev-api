@@ -104,28 +104,21 @@ adminRouter.get('/bookmarks/latest-entries', keycloak.protect('realm:ROLE_ADMIN'
 /* GET bookmark by id */
 adminRouter.get('/bookmarks/:bookmarkId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
 
-  try {
-    const bookmark = await Bookmark.findOne({
-      _id: request.params.bookmarkId
-    });
+  const bookmark = await Bookmark.findOne({
+    _id: request.params.bookmarkId
+  });
 
-    if (!bookmark) {
-      return response
-        .status(HttpStatus.NOT_FOUND)
-        .send(new AppError(
-          HttpStatus.NOT_FOUND,
-          'Not Found Error',
-          ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId + ' not found']
-          )
-        );
-    } else {
-      response.status(HttpStatus.OK).send(bookmark);
-    }
-  } catch (err) {
+  if (!bookmark) {
     return response
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .send(new AppError(HttpStatus.INTERNAL_SERVER_ERROR, 'Unknown server error',
-        ['Unknown server error when trying to delete bookmark with id ' + request.params.bookmarkId]));
+      .status(HttpStatus.NOT_FOUND)
+      .send(new AppError(
+        HttpStatus.NOT_FOUND,
+        'Not Found Error',
+        ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId + ' not found']
+        )
+      );
+  } else {
+    response.status(HttpStatus.OK).send(bookmark);
   }
 }));
 
@@ -138,18 +131,7 @@ adminRouter.post('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrappe
 
   BookmarkInputValidator.validateBookmarkInputForAdmin(request, response, bookmark);
 
-  if (bookmark.shared) {
-    const existingBookmark = await Bookmark.findOne({
-      shared: true,
-      location: bookmark.location
-    });
-    if (existingBookmark) {
-      return response
-        .status(HttpStatus.CONFLICT)
-        .send(new AppError(HttpStatus.CONFLICT, 'A public bookmark with this location is already present',
-          ['A public bookmark with this location is already present']));
-    }
-  }
+  await BookmarkInputValidator.verifyPublicBookmarkExistenceOnCreation(bookmark);
 
   let newBookmark = await bookmark.save();
 
@@ -170,6 +152,8 @@ adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), 
   const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
 
   BookmarkInputValidator.validateBookmarkInputForAdmin(request, response, bookmark);
+
+  await BookmarkInputValidator.verifyPublicBookmarkExistenceOnUpdate(bookmark, bookmark.userId);
 
   const updatedBookmark = await Bookmark.findOneAndUpdate(
     {
