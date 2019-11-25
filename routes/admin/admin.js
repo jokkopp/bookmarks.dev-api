@@ -5,8 +5,8 @@ const Keycloak = require('keycloak-connect');
 
 const Bookmark = require('../../models/bookmark');
 const bookmarkHelper = require('../../common/bookmark-helper');
-const AppError = require('../../models/error');
 const NotFoundError = require('../../models/not-found.error');
+const ValidationError = require('../../models/validation.error');
 
 const common = require('../../common/config');
 const config = common.config();
@@ -73,9 +73,7 @@ adminRouter.get('/bookmarks/latest-entries', keycloak.protect('realm:ROLE_ADMIN'
     const fromDate = new Date(parseFloat(req.query.since, 0));
     const toDate = req.query.to ? new Date(parseFloat(req.query.to, 0)) : new Date();
     if (fromDate > toDate) {
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .send(new AppError(HttpStatus.BAD_REQUEST, 'timing query parameters values', ['<Since> param value must be before <to> parameter value']));
+      throw new ValidationError('timing query parameters values', ['<Since> param value must be before <to> parameter value']);
     }
     const bookmarks = await Bookmark.find(
       {
@@ -84,8 +82,8 @@ adminRouter.get('/bookmarks/latest-entries', keycloak.protect('realm:ROLE_ADMIN'
           $gte: fromDate,
           $lte: toDate
         }
-
-      }).sort({createdAt: 'desc'}).lean().exec();
+      }
+    ).sort({createdAt: 'desc'}).lean().exec();
 
     res.send(bookmarks);
   } else {
@@ -95,7 +93,8 @@ adminRouter.get('/bookmarks/latest-entries', keycloak.protect('realm:ROLE_ADMIN'
       {
         'shared': true,
         createdAt: {$gte: new Date((new Date().getTime() - (numberOfDaysToLookBack * 24 * 60 * 60 * 1000)))}
-      }).sort({createdAt: 'desc'}).lean().exec();
+      }
+    ).sort({createdAt: 'desc'}).lean().exec();
 
     res.send(bookmarks);
   }
@@ -109,14 +108,7 @@ adminRouter.get('/bookmarks/:bookmarkId', keycloak.protect(), AsyncWrapper.wrapA
   });
 
   if (!bookmark) {
-    return response
-      .status(HttpStatus.NOT_FOUND)
-      .send(new AppError(
-        HttpStatus.NOT_FOUND,
-        'Not Found Error',
-        ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId + ' not found']
-        )
-      );
+    throw new NotFoundError(`Bookmark NOT_FOUND with id:${request.params.bookmarkId }`);
   } else {
     response.status(HttpStatus.OK).send(bookmark);
   }
@@ -176,18 +168,11 @@ adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), 
 */
 adminRouter.delete('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
   const bookmark = await Bookmark.findOneAndRemove({
-    _id: request.params.bookmarkId,
+    _id: request.params.bookmarkId
   });
 
   if (!bookmark) {
-    return response
-      .status(HttpStatus.NOT_FOUND)
-      .send(new AppError(
-        HttpStatus.NOT_FOUND,
-        'Not Found Error',
-        ['Bookmark for user id ' + request.params.userId + ' and bookmark id ' + request.params.bookmarkId + ' not found']
-        )
-      );
+    throw new NotFoundError(`Bookmark NOT_FOUND with id:${request.params.bookmarkId }`);
   } else {
     response.status(HttpStatus.NO_CONTENT).send('Bookmark successfully deleted');
   }
