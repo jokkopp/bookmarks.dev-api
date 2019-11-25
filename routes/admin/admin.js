@@ -194,30 +194,35 @@ adminRouter.delete('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'
 }));
 
 /*
-* DELETE bookmarks
-* either by providing the location (for example to clean up spam)
-* or userId (deletes all bookmarks submitted by the user)
-*
-* TO DO - assign to next for next deletion, instead of the filte logic - is cleaner
+* DELETE bookmarks with location
 */
-adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
-
-  let filter = {};
+adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response, next) => {
   if (request.query.location) {
-    filter.location = request.query.location;
-  }
-  if (request.query.userId) {
-    filter.userId = request.query.userId;
-  }
-  if (filter === {}) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'You can either delete bookmarks by location or userId - at least one of them mandatory',
-        ['You can either delete bookmarks by location or userId - at least one of them mandatory']));
-  }
+    await Bookmark.deleteMany({location: request.query.location});
 
-  await Bookmark.deleteMany(filter);
-  response.status(HttpStatus.NO_CONTENT).send('Bookmarks successfully deleted');
+    return response.status(HttpStatus.NO_CONTENT).send();
+  } else {
+    next();
+  }
+}));
+
+/**
+ * Delete bookmarks of a user, identified by userId
+ */
+adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response, next) => {
+  if (request.query.userId) {
+    await Bookmark.deleteMany({userId: request.query.userId});
+
+    return response.status(HttpStatus.NO_CONTENT).send();
+  } else {
+    next();
+  }
+}));
+
+adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
+  return response
+    .status(HttpStatus.BAD_REQUEST)
+    .send({message: 'You can either delete bookmarks by location or userId - at least one of them mandatory'});
 }));
 
 
