@@ -12,6 +12,7 @@ const adminRouter = require('./routes/admin/admin');
 const publicBookmarksRouter = require('./routes/public-bookmarks');
 const ValidationError = require('./models/validation.error');
 const NotFoundError = require('./models/not-found.error');
+const PublicBookmarkExistingError = require('./models/public-bookmark-existent.error');
 const UseridTokenValidationError = require('./routes/users/userid-validation.error');
 
 const fs = require('fs-extra');
@@ -105,6 +106,16 @@ if (app.get('env') === 'development') {
 app.use(function handleNotFoundError(error, req, res, next) {
   if (error instanceof NotFoundError) {
    return res.status(HttpStatus.NOT_FOUND).send({
+      message: error.message,
+      error: {}
+    });
+  }
+  next(error);
+});
+
+app.use(function handlePublicBookmarkExistingError(error, req, res, next) {
+  if (error instanceof PublicBookmarkExistingError) {
+   return res.status(HttpStatus.CONFLICT).send({
       message: error.message,
       error: {}
     });

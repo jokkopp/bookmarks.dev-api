@@ -10,7 +10,6 @@ const bookmarksSearchService = require('../../common/bookmarks-search.service');
 const UserIdValidator = require('./userid.validator');
 const AsyncWrapper = require('../../common/async-wrapper');
 
-const AppError = require('../../models/error');
 const ValidationError = require('../../models/validation.error');
 const NotFoundError = require('../../models/not-found.error');
 
@@ -42,18 +41,7 @@ personalBookmarksRouter.post('/', keycloak.protect(), AsyncWrapper.wrapAsync(asy
 
   BookmarkInputValidator.validateBookmarkInput(request, response, bookmark);
 
-  if (bookmark.shared) {
-    const existingBookmark = await Bookmark.findOne({
-      shared: true,
-      location: bookmark.location
-    }).lean().exec();
-    if (existingBookmark) {
-      return response
-        .status(HttpStatus.CONFLICT)
-        .send(new AppError(HttpStatus.CONFLICT, 'A public bookmark with this location is already present',
-          ['A public bookmark with this location is already present']));
-    }
-  }
+  await BookmarkInputValidator.verifyPublicBookmarkExistenceOnCreation(bookmark);
 
   let newBookmark = await bookmark.save();
 
@@ -141,19 +129,8 @@ personalBookmarksRouter.put('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
 
   BookmarkInputValidator.validateBookmarkInput(request, response, bookmark);
 
-  if (request.body.shared) {
-    const existingBookmark = await Bookmark.findOne({
-      shared: true,
-      location: request.body.location,
-      userId: {$ne: request.params.userId}
-    }).lean().exec();
-    if (existingBookmark) {
-      return response
-        .status(HttpStatus.CONFLICT)
-        .send(new AppError(HttpStatus.CONFLICT, 'A public bookmark with this location is already present',
-          ['A public bookmark with this location is already present']));
-    }
-  }
+  await BookmarkInputValidator.verifyPublicBookmarkExistenceOnUpdate(bookmark, request.params.userId);
+
   const updatedBookmark = await Bookmark.findOneAndUpdate(
     {
       _id: request.params.bookmarkId,
@@ -165,7 +142,7 @@ personalBookmarksRouter.put('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
 
   const bookmarkNotFound = !updatedBookmark;
   if (bookmarkNotFound) {
-    throw new NotFoundError('Bookmark NOT_FOUND the id: ' + request.params.bookmarkId + ' AND location: ' + bookmark.location);
+    throw new NotFoundError('Bookmark NOT_FOUND with id: ' + request.params.bookmarkId + ' AND location: ' + bookmark.location);
   } else {
     return response
       .status(HttpStatus.OK)
@@ -187,7 +164,7 @@ personalBookmarksRouter.delete('/:bookmarkId', keycloak.protect(), AsyncWrapper.
   });
 
   if (!bookmark) {
-    throw new NotFoundError('Bookmark NOT_FOUND the id: ' + request.params.bookmarkId);
+    throw new NotFoundError('Bookmark NOT_FOUND with id: ' + request.params.bookmarkId);
   } else {
     await User.update(
       {},

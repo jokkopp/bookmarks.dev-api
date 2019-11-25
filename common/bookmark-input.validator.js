@@ -1,5 +1,7 @@
 const constants = require('./constants');
 const ValidationError = require('../models/validation.error');
+const PublicBookmarkExistentError = require('../models/public-bookmark-existent.error');
+const Bookmark = require('../models/bookmark');
 
 let validateBookmarkInput = function(request, response, bookmark) {
 
@@ -70,7 +72,38 @@ let validateBookmarkInputForAdmin = function(request, response, bookmark) {
   }
 }
 
+let verifyPublicBookmarkExistenceOnCreation = async function(bookmark) {
+  if (bookmark.shared) {
+    const existingBookmark = await Bookmark.findOne({
+      shared: true,
+      location: bookmark.location
+    }).lean().exec();
+    if (existingBookmark) {
+      throw new PublicBookmarkExistentError(`A public bookmark with this location is already present - location: ${bookmark.location}`);
+    }
+  }
+
+  return 1;
+}
+
+let verifyPublicBookmarkExistenceOnUpdate = async function(bookmark, userId) {
+  if (bookmark.shared) {
+    const existingBookmark = await Bookmark.findOne({
+      shared: true,
+      location: bookmark.location,
+      userId: {$ne: userId}
+    }).lean().exec();
+    if (existingBookmark) {
+      throw new PublicBookmarkExistentError(`A public bookmark with this location is already present - location: ${bookmark.location}`);
+    }
+  }
+
+  return 1;
+}
+
 module.exports = {
   validateBookmarkInput: validateBookmarkInput,
-  validateBookmarkInputForAdmin: validateBookmarkInputForAdmin
+  validateBookmarkInputForAdmin: validateBookmarkInputForAdmin,
+  verifyPublicBookmarkExistenceOnCreation: verifyPublicBookmarkExistenceOnCreation,
+  verifyPublicBookmarkExistenceOnUpdate: verifyPublicBookmarkExistenceOnUpdate,
 };
