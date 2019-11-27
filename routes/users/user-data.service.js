@@ -96,8 +96,23 @@ let getUserData = async function (request) {
   }
 }
 
+let getLaterReads = async function (request) {
+  userIdTokenValidator.validateUserId(request);
+
+  const userData = await User.findOne({
+    userId: request.params.userId
+  });
+  if (!userData) {
+    throw new NotFoundError(`User data NOT_FOUND for userId: ${request.params.userId}`);
+  } else {
+    const bookmarks = await Bookmark.find({"_id": {$in: userData.readLater}});
+    return bookmarks;
+  }
+}
+
 module.exports = {
   updateUserData: updateUserData,
   createUserData: createUserData,
-  getUserData: getUserData
+  getUserData: getUserData,
+  getLaterReads: getLaterReads
 }

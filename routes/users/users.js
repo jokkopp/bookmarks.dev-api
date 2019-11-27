@@ -33,23 +33,8 @@ usersRouter.get('/:userId', keycloak.protect(), AsyncWrapper.wrapAsync(async (re
 
 /* GET list of bookmarks to be read later for the user */
 usersRouter.get('/:userId/later-reads', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
-  userIdTokenValidator.validateUserId(request);
-
-  const userData = await User.findOne({
-    userId: request.params.userId
-  });
-  if (!userData) {
-    return response
-      .status(HttpStatus.NOT_FOUND)
-      .send(new AppError(
-        'User data was not found',
-        ['User data of the user with the userId ' + request.params.userId + ' was not found']
-        )
-      );
-  } else {
-    const bookmarks = await Bookmark.find({"_id": {$in: userData.readLater}});
-    response.send(bookmarks);
-  }
+  const bookmarks = UserDataService.getLaterReads(request);
+  response.status(HttpStatus.OK).send(bookmarks);
 }));
 
 /* GET list of liked bookmarks by the user */
