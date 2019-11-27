@@ -7,9 +7,12 @@ const Keycloak = require('keycloak-connect');
 const User = require('../../models/user');
 const Bookmark = require('../../models/bookmark');
 const AppError = require('../../models/error');
+const NotFoundError = require('../../models/not-found.error');
+
 const userIdTokenValidator = require('./userid.validator');
 const AsyncWrapper = require('../../common/async-wrapper');
 
+const UserDataService = require('./user-data.service');
 
 const common = require('../../common/config');
 const config = common.config();
@@ -31,20 +34,14 @@ usersRouter.get('/:userId', keycloak.protect(), AsyncWrapper.wrapAsync(async (re
   });
 
   if (!userData) {
-    return response
-      .status(HttpStatus.NOT_FOUND)
-      .send(new AppError(
-        'User data was not found',
-        ['User data of the user with the userId ' + request.params.userId + ' was not found']
-        )
-      );
+    throw new NotFoundError(`User data NOT_FOUND for userId: ${request.params.userId}`);
   } else {
     return response.status(HttpStatus.OK).json(userData);
   }
 }));
 
 /* GET list of bookmarks to be read later for the user */
-usersRouter.get('/:userId/later-reads', keycloak.protect(), async (request, response) => {
+usersRouter.get('/:userId/later-reads', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
   userIdTokenValidator.validateUserId(request);
 
   const userData = await User.findOne({
@@ -62,10 +59,10 @@ usersRouter.get('/:userId/later-reads', keycloak.protect(), async (request, resp
     const bookmarks = await Bookmark.find({"_id": {$in: userData.readLater}});
     response.send(bookmarks);
   }
-});
+}));
 
 /* GET list of liked bookmarks by the user */
-usersRouter.get('/:userId/likes', keycloak.protect(), async (request, response) => {
+usersRouter.get('/:userId/likes', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
   userIdTokenValidator.validateUserId(request);
 
   const userData = await User.findOne({
@@ -84,10 +81,10 @@ usersRouter.get('/:userId/likes', keycloak.protect(), async (request, response) 
     response.send(bookmarks);
   }
 
-});
+}));
 
 /* GET list of bookmarks for the user's watchedTags */
-usersRouter.get('/:userId/watched-tags', keycloak.protect(), async (request, response) => {
+usersRouter.get('/:userId/watched-tags', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
   userIdTokenValidator.validateUserId(request);
   const userData = await User.findOne({
     userId: request.params.userId
@@ -112,10 +109,10 @@ usersRouter.get('/:userId/watched-tags', keycloak.protect(), async (request, res
     //
     response.send(bookmarks);
   }
-});
+}));
 
 /* GET list of user's pinned bookmarks */
-usersRouter.get('/:userId/pinned', keycloak.protect(), async (request, response) => {
+usersRouter.get('/:userId/pinned', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
   userIdTokenValidator.validateUserId(request);
 
   const userData = await User.findOne({
@@ -138,10 +135,10 @@ usersRouter.get('/:userId/pinned', keycloak.protect(), async (request, response)
 
     response.send(orderedBookmarksAsInPinned);
   }
-});
+}));
 
 /* GET list of user's favorite bookmarks */
-usersRouter.get('/:userId/favorites', keycloak.protect(), async (request, response) => {
+usersRouter.get('/:userId/favorites', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
   userIdTokenValidator.validateUserId(request);
   const userData = await User.findOne({
     userId: request.params.userId
@@ -164,10 +161,10 @@ usersRouter.get('/:userId/favorites', keycloak.protect(), async (request, respon
 
     response.send(orderedBookmarksAsInFavorites);
   }
-});
+}));
 
 /* GET list of user's last visited bookmarks */
-usersRouter.get('/:userId/history', keycloak.protect(), async (request, response) => {
+usersRouter.get('/:userId/history', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
   userIdTokenValidator.validateUserId(request);
 
   const userData = await User.findOne({
@@ -192,109 +189,32 @@ usersRouter.get('/:userId/history', keycloak.protect(), async (request, response
 
     response.send(orderedBookmarksAsInHistory);
   }
-});
+}));
 
 
 /*
 * create user details
 * */
-usersRouter.post('/:userId', keycloak.protect(), async (request, response) => {
-
-  userIdTokenValidator.validateUserId(request);
-
-  const invalidUserIdInRequestBody = !request.body.userId || request.body.userId !== request.params.userId;
-  if (invalidUserIdInRequestBody) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'Missing or invalid userId in the request body',
-        ['the userId must be consistent across path, body and access token']));
-  }
-
-  if (!userSearchesAreValid(request)) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError('Searches are not valid',
-        ['Searches are not valid - search text is required']));
-  }
-
-  const userData = new User({
-    userId: request.params.userId,
-    searches: request.body.searches,
-    readLater: request.body.readLater,
-    likes: request.body.likes,
-    watchedTags: request.body.watchedTags,
-    pinned: request.body.pinned,
-    favorites: request.body.favorites,
-    history: request.body.history
-  });
-
-  const newUserData = await userData.save();
-
+usersRouter.post('/:userId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
+  const newUserData = UserDataService.createUserData(request);
   return response.status(HttpStatus.CREATED).send(newUserData);
 
-});
+}));
 
 /* UPDATE user details
 * If users data is not present it will be created (upsert=true)
 *
 * */
-usersRouter.put('/:userId', keycloak.protect(), async (request, response) => {
-
-  userIdTokenValidator.validateUserId(request);
-
-  const invalidUserIdInRequestBody = !request.body.userId || request.body.userId != request.params.userId;
-  if (invalidUserIdInRequestBody) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'Missing or invalid userId in the request body',
-        ['the userId must be consistent across path, body and access token']));
-  }
-
-  if (!userSearchesAreValid(request)) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'Searches are not valid',
-        ['Searches are not valid - search text is required']));
-  }
-
-  //hold only 30 bookmarks in history or pinned
-  if (request.body.history.length > 30) {
-    request.body.history = request.body.history.slice(0, 3);
-  }
-
-  if (request.body.pinned.length > 30) {
-    request.body.pinned = request.body.pinned.slice(0, 3);
-  }
-
-  delete request.body._id;//once we proved it's present we delete it to avoid the following MOngoError by findOneAndUpdate
-  // MongoError: After applying the update to the document {_id: ObjectId('5c513150e13cda73420a9602') , ...}, the (immutable) field '_id' was found to have been altered to _id: "5c513150e13cda73420a9602"
-  const userData = await User.findOneAndUpdate(
-    {userId: request.params.userId},
-    request.body,
-    {upsert: true, new: true}, // options
-  );
-
+usersRouter.put('/:userId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
+  const userData = await UserDataService.updateUserData(request);
   return response.status(HttpStatus.OK).send(userData);
-});
-
-function userSearchesAreValid(request) {
-  const searches = request.body.searches;
-  if (searches && searches.length > 0) {
-    for (let i = 0; i < searches.length; i++) {
-      if (!searches[i].text) {
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
+}));
 
 
 /*
 * DELETE user
 */
-usersRouter.delete('/:userId', keycloak.protect(), async (request, response) => {
+usersRouter.delete('/:userId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
 
   userIdTokenValidator.validateUserId(request);
 
@@ -313,12 +233,12 @@ usersRouter.delete('/:userId', keycloak.protect(), async (request, response) => 
   } else {
     response.status(HttpStatus.NO_CONTENT).send();
   }
-});
+}));
 
 /*
 * rate bookmark
 */
-usersRouter.patch('/:userId/bookmarks/likes/:bookmarkId', keycloak.protect(), async (request, response) => {
+usersRouter.patch('/:userId/bookmarks/likes/:bookmarkId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
 
   userIdTokenValidator.validateUserId(request);
 
@@ -409,6 +329,6 @@ usersRouter.patch('/:userId/bookmarks/likes/:bookmarkId', keycloak.protect(), as
         .send(new AppError(HttpStatus.BAD_REQUEST, 'Rating action should be either LIKE or UNLIKE', ['Rating action should be either STAR or UNSTAR']));
     }
   }
-});
+}));
 
 module.exports = usersRouter;

@@ -5,6 +5,8 @@ const HttpStatus = require('http-status-codes');
 const expect = chai.expect;
 const jwt = require('jsonwebtoken');
 
+
+
 const common = require('../../common/config');
 const config = common.config();
 
@@ -77,33 +79,31 @@ describe('User Data tests', function () {
       });
   });
 
-  it('should fail trying to UPDATE user without userId in the body', function (done) {
+  it('should fail trying to UPDATE user without userId in the body', async function () {
     let invalidUser = JSON.parse(JSON.stringify(userExample));
     delete invalidUser.userId;
-    request(app)
+
+    const response = await request(app)
       .put(`${baseApiUrlUnderTest}/${testUserId}`)
-      .set('Authorization', bearerToken)
-      .end(function (error, response) {
-        expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-        expect(response.body.title).to.equal('Missing or invalid userId in the request body');
-        done();
-      });
+      .set('Authorization', bearerToken);
+
+    expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+    expect(response.body.validationErrors).to.include('Missing or invalid userId in the request body');
   });
 
-  it('should fail trying to UPDATE with invalid user Id in the body', function (done) {
+  it('should fail trying to UPDATE with invalid user Id in the body', async function () {
     let invalidUser = JSON.parse(JSON.stringify(userExample));
     invalidUser.userId = 'invalid_user_id';
-    request(app)
+
+    const response = await request(app)
       .put(`${baseApiUrlUnderTest}/${testUserId}`)
-      .set('Authorization', bearerToken)
-      .end(function (error, response) {
-        expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-        expect(response.body.title).to.equal('Missing or invalid userId in the request body');
-        done();
-      });
+      .set('Authorization', bearerToken);
+
+    expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+    expect(response.body.validationErrors).to.include('Missing or invalid userId in the request body');
   });
 
-  it('should successfully CREATE example user without searches', async function () {
+  it('should successfully UPDATE example user without searches', async function () {
     let newUser = JSON.parse(JSON.stringify(userExample));
     newUser.searches = [];
 
@@ -117,85 +117,75 @@ describe('User Data tests', function () {
     expect(response.body.searches.length).to.equal(0);
   });
 
-  it('should fail trying to UPDATE example user with invalid searches', function (done) {
+  it('should fail trying to UPDATE example user with invalid searches', async function () {
     let userWithInvalidSearches = JSON.parse(JSON.stringify(userExample));
     userWithInvalidSearches.searches.push({"text": "", "lastAccessedAt": "2019-01-28T05:47:47.652Z"});
-    request(app)
+
+    const response = await request(app)
       .put(`${baseApiUrlUnderTest}/${testUserId}`)
       .set('Authorization', bearerToken)
-      .send(userWithInvalidSearches)
-      .end(function (error, response) {
-        expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-        expect(response.body.title).to.equal('Searches are not valid');
-        done();
-      });
+      .send(userWithInvalidSearches);
+
+    expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+    expect(response.body.validationErrors).to.include('Searches are not valid - search text is required');
+
   });
 
-  it('should successfully UPDATE example user with searches', function (done) {
-    request(app)
+  it('should successfully UPDATE example user with searches', async function () {
+    const response = await request(app)
       .put(`${baseApiUrlUnderTest}/${testUserId}`)
       .set('Authorization', bearerToken)
-      .send(userExample)
-      .end(function (error, response) {
-        expect(response.statusCode).to.equal(HttpStatus.OK);
-        expect(response.body.userId).to.equal(testUserId);
-        expect(response.body.searches).to.have.lengthOf(1);
-        expect(response.body.searches[0].text).to.equal(searchTextExample);
-        done();
-      });
+      .send(userExample);
+
+    expect(response.statusCode).to.equal(HttpStatus.OK);
+    expect(response.body.userId).to.equal(testUserId);
+    expect(response.body.searches).to.have.lengthOf(1);
+    expect(response.body.searches[0].text).to.equal(searchTextExample);
   });
 
-  it('should successfully UPDATE example user new starred bookmark', function (done) {
+  it('should successfully UPDATE example user new starred bookmark', async function () {
     let userExampleWithStars = JSON.parse(JSON.stringify(userExample));
     userExampleWithStars.likes = [starredBookmarkId];
 
-    request(app)
+    const response = await request(app)
       .put(`${baseApiUrlUnderTest}/${testUserId}`)
       .set('Authorization', bearerToken)
-      .send(userExampleWithStars)
-      .end(function (error, response) {
-        expect(response.statusCode).to.equal(HttpStatus.OK);
-        expect(response.body.userId).to.equal(testUserId);
-        expect(response.body.likes).to.have.lengthOf(1);
-        expect(response.body.likes[0]).to.equal(starredBookmarkId);
-        done();
-      });
+      .send(userExampleWithStars);
+
+    expect(response.statusCode).to.equal(HttpStatus.OK);
+    expect(response.body.userId).to.equal(testUserId);
+    expect(response.body.likes).to.have.lengthOf(1);
+    expect(response.body.likes[0]).to.equal(starredBookmarkId);
   });
 
-  it('should now successfully READ created/updated user', function (done) {
-    request(app)
+  it('should now successfully READ created/updated user', async function () {
+    const response = await request(app)
       .get(`${baseApiUrlUnderTest}/${testUserId}`)
-      .set('Authorization', bearerToken)
-      .end(function (error, response) {
-        expect(response.statusCode).to.equal(HttpStatus.OK);
-        expect(response.body.userId).to.equal(testUserId);
-        expect(response.body.searches).to.have.lengthOf(1);
-        expect(response.body.searches[0].text).to.equal(searchTextExample);
-        expect(response.body.likes[0]).to.equal(starredBookmarkId);
+      .set('Authorization', bearerToken);
 
-        done();
-      });
+    expect(response.statusCode).to.equal(HttpStatus.OK);
+    expect(response.body.userId).to.equal(testUserId);
+    expect(response.body.searches).to.have.lengthOf(1);
+    expect(response.body.searches[0].text).to.equal(searchTextExample);
+    expect(response.body.likes[0]).to.equal(starredBookmarkId);
+
   });
 
-  it('should succeed to DELETE the new created user', function (done) {
-    request(app)
+  it('should succeed to DELETE the new created user', async function () {
+    const response = await request(app)
       .delete(`${baseApiUrlUnderTest}/${testUserId}`)
-      .set('Authorization', bearerToken)
-      .end(function (error, response) {
-        expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
-        done();
-      });
+      .set('Authorization', bearerToken);
+
+    expect(response.statusCode).to.equal(HttpStatus.NO_CONTENT);
   });
 
 
-  it('should fail trying to DELETE the already deleted user', function (done) {
-    request(app)
+  it('should fail trying to DELETE the already deleted user', async function () {
+    const response = await request(app)
       .delete(`${baseApiUrlUnderTest}/${testUserId}`)
-      .set('Authorization', bearerToken)
-      .end(function (error, response) {
-        expect(response.statusCode).to.equal(HttpStatus.NOT_FOUND);
-        done();
-      });
+      .set('Authorization', bearerToken);
+
+    expect(response.statusCode).to.equal(HttpStatus.NOT_FOUND);
   });
 
 
