@@ -10,6 +10,7 @@ const versionRouter = require('./routes/version');
 const usersRouter = require('./routes/users/users');
 const adminRouter = require('./routes/admin/admin');
 const publicBookmarksRouter = require('./routes/public-bookmarks');
+const { MongoError } = require('mongodb');
 const ValidationError = require('./models/validation.error');
 const NotFoundError = require('./models/not-found.error');
 const PublicBookmarkExistingError = require('./models/public-bookmark-existent.error');

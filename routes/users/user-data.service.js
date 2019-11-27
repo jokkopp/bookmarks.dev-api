@@ -2,6 +2,7 @@ const User = require('../../models/user');
 
 const userIdTokenValidator = require('./userid.validator');
 const ValidationError = require('../../models/validation.error');
+const NotFoundError = require('../../models/not-found.error');
 
 let createUserData = async function (request) {
   userIdTokenValidator.validateUserId(request);
@@ -81,7 +82,22 @@ function userSearchesAreValid(request) {
   return true;
 }
 
+let getUserData = async function (request) {
+  userIdTokenValidator.validateUserId(request);
+
+  const userData = await User.findOne({
+    userId: request.params.userId
+  });
+
+  if (!userData) {
+    throw new NotFoundError(`User data NOT_FOUND for userId: ${request.params.userId}`);
+  } else {
+    return userData;
+  }
+}
+
 module.exports = {
   updateUserData: updateUserData,
-  createUserData: createUserData
+  createUserData: createUserData,
+  getUserData: getUserData
 }

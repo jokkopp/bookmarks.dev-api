@@ -6,7 +6,6 @@ const expect = chai.expect;
 const jwt = require('jsonwebtoken');
 
 
-
 const common = require('../../common/config');
 const config = common.config();
 
@@ -63,20 +62,18 @@ describe('User Data tests', function () {
 
   it('should fail trying to GET user details with invalid user id', async function () {
     const response = await request(app)
-      .get(baseApiUrlUnderTest + '/false_user_id')
+      .get(baseApiUrlUnderTest + '/invalid-user-id')
       .set('Authorization', bearerToken);
 
     expect(response.statusCode).to.equal(HttpStatus.UNAUTHORIZED);
   });
 
-  it('should fail trying to GET data for unexisting user', function (done) {
-    request(app)
+  it('should fail trying to GET data for unexisting user', async function () {
+    const response = await request(app)
       .get(`${baseApiUrlUnderTest}/${testUserId}`)
-      .set('Authorization', bearerToken)
-      .end(function (error, response) {
-        expect(response.statusCode).to.equal(HttpStatus.NOT_FOUND);
-        done();
-      });
+      .set('Authorization', bearerToken);
+
+    expect(response.statusCode).to.equal(HttpStatus.NOT_FOUND);
   });
 
   it('should fail trying to UPDATE user without userId in the body', async function () {

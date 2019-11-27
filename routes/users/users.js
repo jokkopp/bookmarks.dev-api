@@ -27,17 +27,8 @@ usersRouter.use('/:userId/bookmarks', personalBookmarksRouter);
 
 /* GET personal bookmarks of the users */
 usersRouter.get('/:userId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
-  userIdTokenValidator.validateUserId(request);
-
-  const userData = await User.findOne({
-    userId: request.params.userId
-  });
-
-  if (!userData) {
-    throw new NotFoundError(`User data NOT_FOUND for userId: ${request.params.userId}`);
-  } else {
-    return response.status(HttpStatus.OK).json(userData);
-  }
+  const userData = await UserDataService.getUserData(request);
+  return response.status(HttpStatus.OK).json(userData);
 }));
 
 /* GET list of bookmarks to be read later for the user */
