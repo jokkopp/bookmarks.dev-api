@@ -7,7 +7,7 @@ const mongoose = require('mongoose');
 
 const apiBasePathRouter = require('./routes/index');
 const versionRouter = require('./routes/version');
-const usersRouter = require('./routes/users/users');
+const userRouter = require('./routes/users/user.router');
 const adminRouter = require('./routes/admin/admin');
 const publicBookmarksRouter = require('./routes/public-bookmarks');
 const { MongoError } = require('mongodb');
@@ -80,7 +80,7 @@ app.use(function (req, res, next) {
 app.use('/api', apiBasePathRouter);
 app.use('/api/version', versionRouter);
 app.use('/api/public/bookmarks', publicBookmarksRouter);
-app.use('/api/personal/users', usersRouter);
+app.use('/api/personal/users', userRouter);
 app.use('/api/admin', adminRouter);
 
 // catch 404 and forward to error handler
@@ -135,7 +135,7 @@ app.use(function handleUserIdValidationError(error, req, res, next) {
   next(error);
 });
 
-app.use(function handleUserIdValidationError(error, req, res, next) {
+app.use(function handleValidationError(error, req, res, next) {
   if (error instanceof ValidationError) {
     return res.status(HttpStatus.BAD_REQUEST).send(error);
   }
