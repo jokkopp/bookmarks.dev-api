@@ -6,6 +6,9 @@ var Bookmark = require('../models/bookmark');
 var HttpStatus = require('http-status-codes');
 const constants = require('../common/constants');
 
+const AsyncWrapper = require('../common/async-wrapper');
+const NotFoundError = require('../models/not-found.error');
+
 const bookmarksSearchService = require('../common/bookmarks-search.service');
 const superagent = require('superagent');
 
@@ -14,36 +17,33 @@ const MAX_NUMBER_RETURNED_RESULTS = 100;
 /**
  *  Returns the public bookmarks
  */
-router.get('/', async (req, res) => {
-  try {
-    const searchText = req.query.q;
-    const limit = parseInt(req.query.limit);
-    if (searchText) {
-      const bookmarks = await bookmarksSearchService.findBookmarks(searchText, limit, constants.DOMAIN_PUBLIC, null);
+router.get('/', AsyncWrapper.wrapAsync(async (req, res) => {
+  const searchText = req.query.q;
+  const limit = parseInt(req.query.limit);
+  if (searchText) {
+    const bookmarks = await bookmarksSearchService.findBookmarks(searchText, limit, constants.DOMAIN_PUBLIC, null);
 
-      res.send(bookmarks);
-    } else if (req.query.location) {
-      const bookmark = await Bookmark.findOne({
-        'shared': true,
-        location: req.query.location
-      }).lean().exec();
-      if (!bookmark) {
-        return res.status(HttpStatus.NOT_FOUND).send("Bookmark not found");
-      }
-      res.send(bookmark);
-    } else {//no filter - latest bookmarks added to the platform
-      const bookmarks = await Bookmark.find({'shared': true})
-        .sort({createdAt: -1})
-        .limit(MAX_NUMBER_RETURNED_RESULTS)
-        .lean().exec();
-      res.send(bookmarks);
+    res.send(bookmarks);
+  } else if (req.query.location) {
+    const bookmark = await Bookmark.findOne({
+      'shared': true,
+      location: req.query.location
+    }).lean().exec();
+    if (!bookmark) {
+      return res.status(HttpStatus.NOT_FOUND).send("Bookmark not found");
     }
-  } catch (err) {
-    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(err);
+    res.send(bookmark);
+  } else {//no filter - latest bookmarks added to the platform
+    const bookmarks = await Bookmark.find({'shared': true})
+      .sort({createdAt: -1})
+      .limit(MAX_NUMBER_RETURNED_RESULTS)
+      .lean().exec();
+    res.send(bookmarks);
   }
-});
 
-router.get('/tagged/:tag', async (req, res) => {
+}));
+
+router.get('/tagged/:tag', AsyncWrapper.wrapAsync(async (req, res) => {
   const orderByFilter = req.query.orderBy === 'STARS' ? {likes: -1} : {createdAt: -1};
 
   const bookmarks = await Bookmark.find({
@@ -57,7 +57,7 @@ router.get('/tagged/:tag', async (req, res) => {
 
   return res.send(bookmarks);
 
-});
+}));
 
 /**
  * Convert youtube api duration format "PT6M10S" to 6m, "PT2H18M43S" to 2h:18min
@@ -126,18 +126,15 @@ router.get('/scrape', function (req, res) {
 });
 
 /* GET bookmark by id. */
-router.get('/:id', function (req, res) {
-  Bookmark.findById(req.params.id, function (err, bookmark) {
-    if (err) {
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(err);
-    }
-    if (!bookmark) {
-      return res.status(HttpStatus.NOT_FOUND).send("Bookmark not found");
-    }
-    res.send(bookmark);
-  });
+router.get('/:id', AsyncWrapper.wrapAsync(async function (request, response) {
+  const bookmark = await Bookmark.findById(request.params.id);
 
-});
+  if (!bookmark) {
+    throw new NotFoundError(`Bookmakr data NOT_FOUND for id: ${request.params.userId}`);
+  }
+  response.send(bookmark);
+
+}));
 
 
 /* TODO - maybe implement later advancedSearch */
