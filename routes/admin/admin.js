@@ -108,7 +108,7 @@ adminRouter.get('/bookmarks/:bookmarkId', keycloak.protect(), AsyncWrapper.wrapA
   });
 
   if (!bookmark) {
-    throw new NotFoundError(`Bookmark NOT_FOUND with id:${request.params.bookmarkId }`);
+    throw new NotFoundError(`Bookmark NOT_FOUND with id:${request.params.bookmarkId}`);
   } else {
     response.status(HttpStatus.OK).send(bookmark);
   }
@@ -121,7 +121,7 @@ adminRouter.post('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrappe
 
   const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
 
-  BookmarkInputValidator.validateBookmarkInputForAdmin(request, response, bookmark);
+  BookmarkInputValidator.validateBookmarkInputForAdmin(bookmark);
 
   await BookmarkInputValidator.verifyPublicBookmarkExistenceOnCreation(bookmark);
 
@@ -143,7 +143,7 @@ adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), 
 
   const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
 
-  BookmarkInputValidator.validateBookmarkInputForAdmin(request, response, bookmark);
+  BookmarkInputValidator.validateBookmarkInputForAdmin(bookmark);
 
   await BookmarkInputValidator.verifyPublicBookmarkExistenceOnUpdate(bookmark, bookmark.userId);
 
@@ -172,7 +172,7 @@ adminRouter.delete('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'
   });
 
   if (!bookmark) {
-    throw new NotFoundError(`Bookmark NOT_FOUND with id:${request.params.bookmarkId }`);
+    throw new NotFoundError(`Bookmark NOT_FOUND with id:${request.params.bookmarkId}`);
   } else {
     response.status(HttpStatus.NO_CONTENT).send('Bookmark successfully deleted');
   }

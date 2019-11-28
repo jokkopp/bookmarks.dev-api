@@ -3,11 +3,11 @@ const ValidationError = require('../error/validation.error');
 const PublicBookmarkExistentError = require('../error/public-bookmark-existent.error');
 const Bookmark = require('../model/bookmark');
 
-let validateBookmarkInput = function(request, response, bookmark) {
+let validateBookmarkInput = function(userId, bookmark) {
 
   let validationErrorMessages = validateInputExceptUserId(bookmark);
 
-  if (bookmark.userId !== request.params.userId) {
+  if (bookmark.userId !== userId) {
     validationErrorMessages.push("The userId of the bookmark does not match the userId parameter");
   }
 
@@ -31,9 +31,7 @@ function validateInputExceptUserId(bookmark) {
   }
   if (!bookmark.tags || bookmark.tags.length === 0) {
     validationErrorMessages.push('Missing required attribute - tags');
-  }
-
-  if (bookmark.tags.length > constants.MAX_NUMBER_OF_TAGS) {
+  } else if (bookmark.tags.length > constants.MAX_NUMBER_OF_TAGS) {
     validationErrorMessages.push('Too many tags have been submitted - max allowed 8');
   }
 
@@ -64,7 +62,7 @@ function validateInputExceptUserId(bookmark) {
   return validationErrorMessages;
 }
 
-let validateBookmarkInputForAdmin = function(request, response, bookmark) {
+let validateBookmarkInputForAdmin = function(bookmark) {
 
   let validationErrorMessages = validateInputExceptUserId(bookmark);
 

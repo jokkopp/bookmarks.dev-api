@@ -39,7 +39,7 @@ personalBookmarksRouter.post('/', keycloak.protect(), AsyncWrapper.wrapAsync(asy
 
   const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
 
-  BookmarkInputValidator.validateBookmarkInput(request, response, bookmark);
+  BookmarkInputValidator.validateBookmarkInput(request.params.userId, bookmark);
 
   await BookmarkInputValidator.verifyPublicBookmarkExistenceOnCreation(bookmark);
 
@@ -127,7 +127,7 @@ personalBookmarksRouter.put('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
 
   const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
 
-  BookmarkInputValidator.validateBookmarkInput(request, response, bookmark);
+  BookmarkInputValidator.validateBookmarkInput(request.params.userId, bookmark);
 
   await BookmarkInputValidator.verifyPublicBookmarkExistenceOnUpdate(bookmark, request.params.userId);
 
