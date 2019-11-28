@@ -3,7 +3,7 @@ const adminRouter = express.Router();
 
 const Keycloak = require('keycloak-connect');
 
-const Bookmark = require('../../models/bookmark');
+const Bookmark = require('../../model/bookmark');
 const bookmarkHelper = require('../../common/bookmark-helper');
 const NotFoundError = require('../../error/not-found.error');
 const ValidationError = require('../../error/validation.error');

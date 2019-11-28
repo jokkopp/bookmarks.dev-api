@@ -3,8 +3,8 @@ const personalBookmarksRouter = express.Router({mergeParams: true});
 const Keycloak = require('keycloak-connect');
 const Token = require('keycloak-connect/middleware/auth-utils/token');
 
-const Bookmark = require('../../models/bookmark');
-const User = require('../../models/user');
+const Bookmark = require('../../model/bookmark');
+const User = require('../../model/user');
 const bookmarkHelper = require('../../common/bookmark-helper');
 const bookmarksSearchService = require('../../common/bookmarks-search.service');
 const UserIdValidator = require('./userid.validator');

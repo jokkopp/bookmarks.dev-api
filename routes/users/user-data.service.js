@@ -1,4 +1,4 @@
-const User = require('../../models/user');
+const User = require('../../model/user');
 
 const userIdTokenValidator = require('./userid.validator');
 const ValidationError = require('../../error/validation.error');
