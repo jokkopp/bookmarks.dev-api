@@ -5,8 +5,8 @@ const Keycloak = require('keycloak-connect');
 
 const Bookmark = require('../../models/bookmark');
 const bookmarkHelper = require('../../common/bookmark-helper');
-const NotFoundError = require('../../models/not-found.error');
-const ValidationError = require('../../models/validation.error');
+const NotFoundError = require('../../error/not-found.error');
+const ValidationError = require('../../error/validation.error');
 
 const common = require('../../common/config');
 const config = common.config();

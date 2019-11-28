@@ -10,8 +10,8 @@ const bookmarksSearchService = require('../../common/bookmarks-search.service');
 const UserIdValidator = require('./userid.validator');
 const AsyncWrapper = require('../../common/async-wrapper');
 
-const ValidationError = require('../../models/validation.error');
-const NotFoundError = require('../../models/not-found.error');
+const ValidationError = require('../../error/validation.error');
+const NotFoundError = require('../../error/not-found.error');
 
 const common = require('../../common/config');
 const config = common.config();

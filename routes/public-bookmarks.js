@@ -7,7 +7,7 @@ var HttpStatus = require('http-status-codes');
 const constants = require('../common/constants');
 
 const AsyncWrapper = require('../common/async-wrapper');
-const NotFoundError = require('../models/not-found.error');
+const NotFoundError = require('../error/not-found.error');
 
 const bookmarksSearchService = require('../common/bookmarks-search.service');
 const superagent = require('superagent');

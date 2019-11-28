@@ -11,9 +11,9 @@ const userRouter = require('./routes/users/user.router');
 const adminRouter = require('./routes/admin/admin');
 const publicBookmarksRouter = require('./routes/public-bookmarks');
 const { MongoError } = require('mongodb');
-const ValidationError = require('./models/validation.error');
-const NotFoundError = require('./models/not-found.error');
-const PublicBookmarkExistingError = require('./models/public-bookmark-existent.error');
+const ValidationError = require('./error/validation.error');
+const NotFoundError = require('./error/not-found.error');
+const PublicBookmarkExistingError = require('./error/public-bookmark-existent.error');
 const UseridTokenValidationError = require('./routes/users/userid-validation.error');
 
 const fs = require('fs-extra');

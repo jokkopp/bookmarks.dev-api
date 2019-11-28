@@ -14,8 +14,6 @@ const jwt = require('jsonwebtoken');
 
 const common = require('../../common/config');
 const config = common.config();
-const AppError = require('../../models/error');
-const MyError = require('../../models/myerror');
 const constants = require('../../common/constants');
 
 const superagent = require('superagent');

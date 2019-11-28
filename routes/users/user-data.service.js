@@ -1,8 +1,8 @@
 const User = require('../../models/user');
 
 const userIdTokenValidator = require('./userid.validator');
-const ValidationError = require('../../models/validation.error');
-const NotFoundError = require('../../models/not-found.error');
+const ValidationError = require('../../error/validation.error');
+const NotFoundError = require('../../error/not-found.error');
 
 let createUserData = async function (request) {
   userIdTokenValidator.validateUserId(request);
@@ -246,19 +246,17 @@ let validateInputForBookmarkRating = function (request) {
   if (!request.body.action) {
     validationErrorMessages.push('Missing required attributes - action');
   }
-  if(!(request.body.action === 'LIKE' || request.body.action === 'UNLIKE')) {
+  if (!(request.body.action === 'LIKE' || request.body.action === 'UNLIKE')) {
     validationErrorMessages.push('Invalid value - rating action should be LIKE or UNLIKE');
   }
-  if(validationErrorMessages.length > 0){
+  if (validationErrorMessages.length > 0) {
     throw new ValidationError('Rating bookmark input is not valid', validationErrorMessages);
   }
 }
 
 let likeBookmark = async function (userData, request) {
   if (userData.likes.includes(request.params.bookmarkId)) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'You already starred this bookmark', ['You already starred this bookmark']));
+    throw new ValidationError('You already starred this bookmark', ['You already starred this bookmark']);
   } else {
 
     await User.update(
@@ -277,11 +275,9 @@ let likeBookmark = async function (userData, request) {
   }
 }
 
-let dislikeBookmark = async function(userData, request) {
+let dislikeBookmark = async function (userData, request) {
   if (!userData.likes.includes(request.params.bookmarkId)) {
-    return response
-      .status(HttpStatus.BAD_REQUEST)
-      .send(new AppError(HttpStatus.BAD_REQUEST, 'You did not like this bookmark', ['You did not like this bookmark']));
+    throw new ValidationError('You did not like this bookmark', ['You did not like this bookmark']);
   } else {
 
     await User.update(
