@@ -7,6 +7,7 @@ const Bookmark = require('../../model/bookmark');
 const User = require('../../model/user');
 const bookmarkHelper = require('../../common/bookmark-helper');
 const bookmarksSearchService = require('../../common/bookmarks-search.service');
+const PersonalBookmarksService = require('./personal-bookmarks.service');
 const UserIdValidator = require('./userid.validator');
 const AsyncWrapper = require('../../common/async-wrapper');
 
@@ -36,14 +37,8 @@ personalBookmarksRouter.use(keycloak.middleware());
 personalBookmarksRouter.post('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
 
   UserIdValidator.validateUserId(request);
-
   const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
-
-  BookmarkInputValidator.validateBookmarkInput(request.params.userId, bookmark);
-
-  await BookmarkInputValidator.verifyPublicBookmarkExistenceOnCreation(bookmark);
-
-  let newBookmark = await bookmark.save();
+  let newBookmark = await PersonalBookmarksService.createBookmark(request.params.userId, bookmark);
 
   response
     .set('Location', `${config.basicApiUrl}private/${request.params.userId}/bookmarks/${newBookmark.id}`)
@@ -87,14 +82,7 @@ personalBookmarksRouter.get('/', keycloak.protect(), AsyncWrapper.wrapAsync(asyn
 personalBookmarksRouter.get('/tags', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
 
   UserIdValidator.validateUserId(request);
-
-  const tags = await Bookmark.distinct("tags",
-    {
-      $or: [
-        {userId: request.params.userId},
-        {shared: true}
-      ]
-    }); // sort does not work with distinct in mongoose - https://mongoosejs.com/docs/api.html#query_Query-sort
+  const tags = await PersonalBookmarksService.getTagsForUser(request.params.userId);
 
   response.send(tags);
 }));
@@ -102,19 +90,11 @@ personalBookmarksRouter.get('/tags', keycloak.protect(), AsyncWrapper.wrapAsync(
 
 /* GET bookmark of user */
 personalBookmarksRouter.get('/:bookmarkId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
-
   UserIdValidator.validateUserId(request);
 
-  const bookmark = await Bookmark.findOne({
-    _id: request.params.bookmarkId,
-    userId: request.params.userId
-  });
+  const bookmark = await PersonalBookmarksService.getBookmarkForUser(request.params.userId, request.params.bookmarkId);
 
-  if (!bookmark) {
-    throw new NotFoundError(`Bookmark NOT_FOUND the userId: ${request.params.userId} AND id: ${request.params.bookmarkId}`);
-  } else {
-    return response.status(HttpStatus.OK).send(bookmark);
-  }
+  return response.status(HttpStatus.OK).send(bookmark);
 }));
 
 /**
@@ -127,27 +107,9 @@ personalBookmarksRouter.put('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
 
   const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
 
-  BookmarkInputValidator.validateBookmarkInput(request.params.userId, bookmark);
+  const updatedBookmark = await PersonalBookmarksService.updateBookmark(request.params.userId, request.params.bookmarkId, bookmark);
 
-  await BookmarkInputValidator.verifyPublicBookmarkExistenceOnUpdate(bookmark, request.params.userId);
-
-  const updatedBookmark = await Bookmark.findOneAndUpdate(
-    {
-      _id: request.params.bookmarkId,
-      userId: request.params.userId
-    },
-    bookmark,
-    {new: true}
-  );
-
-  const bookmarkNotFound = !updatedBookmark;
-  if (bookmarkNotFound) {
-    throw new NotFoundError('Bookmark NOT_FOUND with id: ' + request.params.bookmarkId + ' AND location: ' + bookmark.location);
-  } else {
-    return response
-      .status(HttpStatus.OK)
-      .send(updatedBookmark);
-  }
+  return response.status(HttpStatus.OK).send(updatedBookmark);
 }));
 
 /*
