@@ -119,32 +119,8 @@ personalBookmarksRouter.delete('/:bookmarkId', keycloak.protect(), AsyncWrapper.
 
   UserIdValidator.validateIsAdminOrUserId(request);
 
-  const bookmarkId = request.params.bookmarkId;
-  const bookmark = await Bookmark.findOneAndRemove({
-    _id: bookmarkId,
-    userId: request.params.userId
-  });
-
-  if (!bookmark) {
-    throw new NotFoundError('Bookmark NOT_FOUND with id: ' + request.params.bookmarkId);
-  } else {
-    await User.update(
-      {},
-      {
-        $pull: {
-          readLater: bookmarkId,
-          likes: bookmarkId,
-          pinned: bookmarkId,
-          history: bookmarkId,
-          favorites: bookmarkId
-        }
-      },
-      {multi: true}
-    );
-
-    return response.status(HttpStatus.NO_CONTENT).send();
-  }
-
+  await PersonalBookmarksService.deleteBookmarkById(request.params.userId, request.params.bookmarkId);
+  return response.status(HttpStatus.NO_CONTENT).send();
 }));
 
 /*
