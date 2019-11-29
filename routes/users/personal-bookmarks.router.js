@@ -126,12 +126,22 @@ personalBookmarksRouter.delete('/:bookmarkId', keycloak.protect(), AsyncWrapper.
 /*
 * DELETE bookmark for user by location
 */
-personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
+personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response, next) => {
   UserIdValidator.validateIsAdminOrUserId(request);
 
-  await PersonalBookmarksService.deleteBookmarkByLocation(request.params.userId, request.query.location);
+  const location = request.query.location;
+  if(location) {
+    await PersonalBookmarksService.deleteBookmarkByLocation(request.params.userId, location);
+  } else {
+    next();
+  }
 
   return response.status(HttpStatus.NO_CONTENT).send();
+}));
+
+personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
+  throw new ValidationError('Missing parameters',
+    ['You need to provide bookmark id or location to delete personal bookmarks'])
 }));
 
 module.exports = personalBookmarksRouter;
