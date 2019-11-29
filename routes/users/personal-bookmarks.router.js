@@ -127,18 +127,9 @@ personalBookmarksRouter.delete('/:bookmarkId', keycloak.protect(), AsyncWrapper.
 * DELETE bookmark for user by location
 */
 personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
-
   UserIdValidator.validateIsAdminOrUserId(request);
 
-  const location = request.query.location;
-  const bookmark = await Bookmark.findOneAndRemove({
-    location: location,
-    userId: request.params.userId
-  });
-
-  if (!bookmark) {
-    throw new NotFoundError(`Bookmark NOT_FOUND the userId: ${request.params.userId} AND location: ${location}`);
-  }
+  await PersonalBookmarksService.deleteBookmarkByLocation(request.params.userId, request.query.location);
 
   return response.status(HttpStatus.NO_CONTENT).send();
 }));

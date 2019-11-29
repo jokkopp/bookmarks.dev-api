@@ -165,27 +165,24 @@ let deleteBookmarkById = async (userId, bookmarkId) => {
 /*
 * DELETE bookmark for user by location
 */
-personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
-
-  UserIdValidator.validateIsAdminOrUserId(request);
-
-  const location = request.query.location;
+let deleteBookmarkByLocation = async (userId, location) => {
   const bookmark = await Bookmark.findOneAndRemove({
     location: location,
-    userId: request.params.userId
+    userId: userId
   });
 
   if (!bookmark) {
-    throw new NotFoundError(`Bookmark NOT_FOUND the userId: ${request.params.userId} AND location: ${location}`);
+    throw new NotFoundError(`Bookmark NOT_FOUND the userId: ${userId} AND location: ${location}`);
   }
 
-  return response.status(HttpStatus.NO_CONTENT).send();
-}));
+  return true;
+};
 
 module.exports = {
   createBookmark: createBookmark,
   getTagsForUser: getTagsForUser,
   getBookmarkForUser: getBookmarkById,
   updateBookmark: updateBookmark,
-  deleteBookmarkById: deleteBookmarkById
+  deleteBookmarkById: deleteBookmarkById,
+  deleteBookmarkByLocation: deleteBookmarkByLocation
 };
