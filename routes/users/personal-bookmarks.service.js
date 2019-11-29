@@ -33,7 +33,7 @@ personalBookmarksRouter.use(keycloak.middleware());
 /**
  * CREATE bookmark for user
  */
-let createBookmark = async function (userId, bookmark ){
+let createBookmark = async function (userId, bookmark) {
   BookmarkInputValidator.validateBookmarkInput(userId, bookmark);
 
   await BookmarkInputValidator.verifyPublicBookmarkExistenceOnCreation(bookmark);
@@ -90,7 +90,7 @@ let getTagsForUser = async (userId) => {
 };
 
 
-/* GET bookmark of user */
+/* GET bookmark of user by bookmarkId */
 let getBookmarkById = async (userId, bookmarkId) => {
 
   const bookmark = await Bookmark.findOne({
@@ -103,6 +103,30 @@ let getBookmarkById = async (userId, bookmarkId) => {
   } else {
     return bookmark;
   }
+};
+
+/* GET bookmark of user by location*/
+let getBookmarkByLocation = async (userId, location) => {
+
+  const bookmark = await Bookmark.findOne({
+    userId: userId,
+    location: location
+  }).lean().exec();
+
+  if (!bookmark) {
+    throw new NotFoundError(`Bookmark NOT_FOUND the userId: ${request.params.userId} AND id: ${request.params.bookmarkId}`);
+  } else {
+    return bookmark;
+  }
+};
+
+/* GET bookmark of user by location - currently there is a limit set to 100 */
+let getLatestBookmarks = async (userId) => {
+  const bookmarks = await Bookmark.find({userId: userId})
+    .sort({lastAccessedAt: -1})
+    .limit(100);
+
+  return bookmarks;
 };
 
 /**
@@ -181,7 +205,9 @@ let deleteBookmarkByLocation = async (userId, location) => {
 module.exports = {
   createBookmark: createBookmark,
   getTagsForUser: getTagsForUser,
-  getBookmarkForUser: getBookmarkById,
+  getBookmarkById: getBookmarkById,
+  getBookmarkByLocation: getBookmarkByLocation,
+  getLatestBookmarks: getLatestBookmarks,
   updateBookmark: updateBookmark,
   deleteBookmarkById: deleteBookmarkById,
   deleteBookmarkByLocation: deleteBookmarkByLocation

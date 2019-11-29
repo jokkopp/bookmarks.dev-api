@@ -1,10 +1,7 @@
 const express = require('express');
 const personalBookmarksRouter = express.Router({mergeParams: true});
 const Keycloak = require('keycloak-connect');
-const Token = require('keycloak-connect/middleware/auth-utils/token');
 
-const Bookmark = require('../../model/bookmark');
-const User = require('../../model/user');
 const bookmarkHelper = require('../../common/bookmark-helper');
 const bookmarksSearchService = require('../../common/bookmarks-search.service');
 const PersonalBookmarksService = require('./personal-bookmarks.service');
@@ -18,7 +15,6 @@ const common = require('../../common/config');
 const config = common.config();
 
 const constants = require('../../common/constants');
-const BookmarkInputValidator = require('../../common/bookmark-input.validator');
 
 const HttpStatus = require('http-status-codes');
 
@@ -47,9 +43,8 @@ personalBookmarksRouter.post('/', keycloak.protect(), AsyncWrapper.wrapAsync(asy
 
 }));
 
-/* GET bookmark of user */
-personalBookmarksRouter.get('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
-
+/* GET bookmark of user  by id*/
+personalBookmarksRouter.get('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response, next) => {
   UserIdValidator.validateUserId(request);
 
   const searchText = request.query.q;
@@ -57,30 +52,31 @@ personalBookmarksRouter.get('/', keycloak.protect(), AsyncWrapper.wrapAsync(asyn
 
   if (searchText) {
     const bookmarks = await bookmarksSearchService.findBookmarks(searchText, limit, constants.DOMAIN_PERSONAL, request.params.userId);
-
     return response.send(bookmarks);
-  } else if (request.query.location) {
-    const bookmark = await Bookmark.findOne({
-      userId: request.params.userId,
-      location: request.query.location
-    }).lean().exec();
-    if (!bookmark) {
-      return response.status(HttpStatus.NOT_FOUND).send("Bookmark not found");
-    }
-    return response.send(bookmark);
-  } else {//no filter - latest bookmarks added to the platform
-    const bookmarks = await Bookmark.find({userId: request.params.userId})
-      .sort({lastAccessedAt: -1})
-      .limit(100);
-
-    return response.send(bookmarks);
+  } else {
+    next();
   }
 
 }));
 
+/* GET bookmark of user by location*/
+personalBookmarksRouter.get('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response, next) => {
+  if (request.query.location) {
+    const bookmark = await PersonalBookmarksService.getBookmarkByLocation(request.params.userId, request.query.location);
+    return response.send(bookmark);
+  } else {
+    next();
+  }
+}));
+
+/* GET bookmark of user */
+personalBookmarksRouter.get('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
+  const bookmarks = await PersonalBookmarksService.getLatestBookmarks(request.params.userId);
+  return response.send(bookmarks);
+}));
+
 /* GET tags used by user */
 personalBookmarksRouter.get('/tags', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
-
   UserIdValidator.validateUserId(request);
   const tags = await PersonalBookmarksService.getTagsForUser(request.params.userId);
 
@@ -93,7 +89,7 @@ personalBookmarksRouter.get('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
   UserIdValidator.validateUserId(request);
 
   const {userId, bookmarkId} = request.params;
-  const bookmark = await PersonalBookmarksService.getBookmarkForUser(userId, bookmarkId);
+  const bookmark = await PersonalBookmarksService.getBookmarkById(userId, bookmarkId);
 
   return response.status(HttpStatus.OK).send(bookmark);
 }));
@@ -132,7 +128,7 @@ personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(a
   UserIdValidator.validateIsAdminOrUserId(request);
 
   const location = request.query.location;
-  if(location) {
+  if (location) {
     await PersonalBookmarksService.deleteBookmarkByLocation(request.params.userId, location);
   } else {
     next();
