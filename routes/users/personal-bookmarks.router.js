@@ -92,7 +92,8 @@ personalBookmarksRouter.get('/tags', keycloak.protect(), AsyncWrapper.wrapAsync(
 personalBookmarksRouter.get('/:bookmarkId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
   UserIdValidator.validateUserId(request);
 
-  const bookmark = await PersonalBookmarksService.getBookmarkForUser(request.params.userId, request.params.bookmarkId);
+  const {userId, bookmarkId} = request.params;
+  const bookmark = await PersonalBookmarksService.getBookmarkForUser(userId, bookmarkId);
 
   return response.status(HttpStatus.OK).send(bookmark);
 }));
@@ -107,7 +108,8 @@ personalBookmarksRouter.put('/:bookmarkId', keycloak.protect(), AsyncWrapper.wra
 
   const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
 
-  const updatedBookmark = await PersonalBookmarksService.updateBookmark(request.params.userId, request.params.bookmarkId, bookmark);
+  const {userId, bookmarkId} = request.params;
+  const updatedBookmark = await PersonalBookmarksService.updateBookmark(userId, bookmarkId, bookmark);
 
   return response.status(HttpStatus.OK).send(updatedBookmark);
 }));
