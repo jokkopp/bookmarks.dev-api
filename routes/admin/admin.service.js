@@ -1,10 +1,7 @@
 const express = require('express');
 const adminRouter = express.Router();
 
-const Keycloak = require('keycloak-connect');
-
 const Bookmark = require('../../model/bookmark');
-const bookmarkHelper = require('../../common/bookmark-helper');
 const NotFoundError = require('../../error/not-found.error');
 const ValidationError = require('../../error/validation.error');
 
@@ -14,15 +11,10 @@ const BookmarkInputValidator = require('../../common/bookmark-input.validator');
 
 const HttpStatus = require('http-status-codes');
 
-const AsyncWrapper = require('../../common/async-wrapper');
-
 //showdown converter - https://github.com/showdownjs/showdown
 const showdown = require('showdown'),
   converter = new showdown.Converter();
 
-//add keycloak middleware
-const keycloak = new Keycloak({scope: 'openid'}, config.keycloak);
-adminRouter.use(keycloak.middleware());
 
 
 /* GET all bookmarks */
@@ -154,50 +146,34 @@ let updateBookmark = async (bookmark) => {
 /*
 * DELETE bookmark for by bookmarkId
 */
-adminRouter.delete('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
+let deleteBookmarkById = async (bookmarkId) => {
   const bookmark = await Bookmark.findOneAndRemove({
-    _id: request.params.bookmarkId
+    _id: bookmarkId
   });
 
   if (!bookmark) {
     throw new NotFoundError(`Bookmark NOT_FOUND with id:${request.params.bookmarkId}`);
   } else {
-    response.status(HttpStatus.NO_CONTENT).send('Bookmark successfully deleted');
+    return true;
   }
-}));
+};
 
 /*
 * DELETE bookmarks with location
 */
-adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response, next) => {
-  if (request.query.location) {
-    await Bookmark.deleteMany({location: request.query.location});
+let deleteBookmarksByLocation = async (location) => {
+  await Bookmark.deleteMany({location: location});
 
-    return response.status(HttpStatus.NO_CONTENT).send();
-  } else {
-    next();
-  }
-}));
+  return true;
+};
 
 /**
  * Delete bookmarks of a user, identified by userId
  */
-adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response, next) => {
-  if (request.query.userId) {
-    await Bookmark.deleteMany({userId: request.query.userId});
-
-    return response.status(HttpStatus.NO_CONTENT).send();
-  } else {
-    next();
-  }
-}));
-
-adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
-  return response
-    .status(HttpStatus.BAD_REQUEST)
-    .send({message: 'You can either delete bookmarks by location or userId - at least one of them mandatory'});
-}));
-
+let deleteBookmarksByUserId = async (userId) => {
+    await Bookmark.deleteMany({userId: userId});
+    return true;
+};
 
 module.exports = {
   getBookmarksWithFilter: getBookmarksWithFilter,
@@ -206,5 +182,8 @@ module.exports = {
   getLatestBookmarksWithDaysBack: getLatestBookmarksWithDaysBack,
   getBookmarkById: getBookmarkById,
   createBookmark: createBookmark,
-  updateBookmark: updateBookmark
+  updateBookmark: updateBookmark,
+  deleteBookmarkById: deleteBookmarkById,
+  deleteBookmarksByLocation: deleteBookmarksByLocation,
+  deleteBookmarksByUserId: deleteBookmarksByUserId
 };

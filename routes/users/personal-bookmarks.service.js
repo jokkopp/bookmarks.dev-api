@@ -1,11 +1,8 @@
 const express = require('express');
 const personalBookmarksRouter = express.Router({mergeParams: true});
-const Keycloak = require('keycloak-connect');
-const Token = require('keycloak-connect/middleware/auth-utils/token');
 
 const Bookmark = require('../../model/bookmark');
 const User = require('../../model/user');
-const bookmarkHelper = require('../../common/bookmark-helper');
 const bookmarksSearchService = require('../../common/bookmarks-search.service');
 const UserIdValidator = require('./userid.validator');
 const AsyncWrapper = require('../../common/async-wrapper');
@@ -21,15 +18,6 @@ const BookmarkInputValidator = require('../../common/bookmark-input.validator');
 
 const HttpStatus = require('http-status-codes');
 
-//showdown converter - https://github.com/showdownjs/showdown
-const showdown = require('showdown'),
-  converter = new showdown.Converter();
-
-//add keycloak middleware
-const keycloak = new Keycloak({scope: 'openid'}, config.keycloak);
-personalBookmarksRouter.use(keycloak.middleware());
-
-
 /**
  * CREATE bookmark for user
  */
@@ -42,38 +30,6 @@ let createBookmark = async function (userId, bookmark) {
 
   return newBookmark;
 }
-
-
-/* GET bookmark of user */
-personalBookmarksRouter.get('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
-
-  UserIdValidator.validateUserId(request);
-
-  const searchText = request.query.q;
-  const limit = parseInt(request.query.limit);
-
-  if (searchText) {
-    const bookmarks = await bookmarksSearchService.findBookmarks(searchText, limit, constants.DOMAIN_PERSONAL, request.params.userId);
-
-    return response.send(bookmarks);
-  } else if (request.query.location) {
-    const bookmark = await Bookmark.findOne({
-      userId: request.params.userId,
-      location: request.query.location
-    }).lean().exec();
-    if (!bookmark) {
-      return response.status(HttpStatus.NOT_FOUND).send("Bookmark not found");
-    }
-    return response.send(bookmark);
-  } else {//no filter - latest bookmarks added to the platform
-    const bookmarks = await Bookmark.find({userId: request.params.userId})
-      .sort({lastAccessedAt: -1})
-      .limit(100);
-
-    return response.send(bookmarks);
-  }
-
-}));
 
 /* GET tags used by user */
 let getTagsForUser = async (userId) => {

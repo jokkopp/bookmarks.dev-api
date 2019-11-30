@@ -3,14 +3,10 @@ const adminRouter = express.Router();
 
 const Keycloak = require('keycloak-connect');
 
-const Bookmark = require('../../model/bookmark');
 const bookmarkHelper = require('../../common/bookmark-helper');
-const NotFoundError = require('../../error/not-found.error');
-const ValidationError = require('../../error/validation.error');
 
 const common = require('../../common/config');
 const config = common.config();
-const BookmarkInputValidator = require('../../common/bookmark-input.validator');
 const AdminService = require('./admin.service');
 
 const HttpStatus = require('http-status-codes');
@@ -105,24 +101,17 @@ adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), 
 * DELETE bookmark for by bookmarkId
 */
 adminRouter.delete('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
-  const bookmark = await Bookmark.findOneAndRemove({
-    _id: request.params.bookmarkId
-  });
-
-  if (!bookmark) {
-    throw new NotFoundError(`Bookmark NOT_FOUND with id:${request.params.bookmarkId}`);
-  } else {
-    response.status(HttpStatus.NO_CONTENT).send('Bookmark successfully deleted');
-  }
+  await AdminService.deleteBookmarkById(request.params.bookmarkId);
+  response.status(HttpStatus.NO_CONTENT).send('Bookmark successfully deleted');
 }));
 
 /*
 * DELETE bookmarks with location
 */
 adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response, next) => {
-  if (request.query.location) {
-    await Bookmark.deleteMany({location: request.query.location});
-
+  const location = request.query.location;
+  if (location) {
+    await AdminService.deleteBookmarksByLocation(location);
     return response.status(HttpStatus.NO_CONTENT).send();
   } else {
     next();
@@ -133,9 +122,9 @@ adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrap
  * Delete bookmarks of a user, identified by userId
  */
 adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response, next) => {
-  if (request.query.userId) {
-    await Bookmark.deleteMany({userId: request.query.userId});
-
+  const userId = request.query.userId;
+  if (userId) {
+    await AdminService.deleteBookmarksByUserId(userId);
     return response.status(HttpStatus.NO_CONTENT).send();
   } else {
     next();

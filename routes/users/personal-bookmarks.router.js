@@ -9,7 +9,6 @@ const UserIdValidator = require('./userid.validator');
 const AsyncWrapper = require('../../common/async-wrapper');
 
 const ValidationError = require('../../error/validation.error');
-const NotFoundError = require('../../error/not-found.error');
 
 const common = require('../../common/config');
 const config = common.config();
@@ -17,10 +16,6 @@ const config = common.config();
 const constants = require('../../common/constants');
 
 const HttpStatus = require('http-status-codes');
-
-//showdown converter - https://github.com/showdownjs/showdown
-const showdown = require('showdown'),
-  converter = new showdown.Converter();
 
 //add keycloak middleware
 const keycloak = new Keycloak({scope: 'openid'}, config.keycloak);
