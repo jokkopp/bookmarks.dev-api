@@ -34,21 +34,19 @@ let getLatestBookmarks = async () => {
   return bookmarks;
 }
 
-router.get('/tagged/:tag', AsyncWrapper.wrapAsync(async (req, res) => {
-  const orderByFilter = req.query.orderBy === 'STARS' ? {likes: -1} : {createdAt: -1};
-
+let getBookmarksForTag = async (tag, orderByFilter) => {
   const bookmarks = await Bookmark.find({
     shared: true,
-    tags: req.params.tag
+    tags: tag
   })
     .sort(orderByFilter)
     .limit(MAX_NUMBER_RETURNED_RESULTS)
     .lean()
     .exec();
 
-  return res.send(bookmarks);
+  return bookmarks;
 
-}));
+};
 
 /**
  * Convert youtube api duration format "PT6M10S" to 6m, "PT2H18M43S" to 2h:18min
@@ -119,12 +117,10 @@ router.get('/scrape', function (req, res) {
 /* GET bookmark by id. */
 router.get('/:id', AsyncWrapper.wrapAsync(async function (request, response) {
   const bookmark = await Bookmark.findById(request.params.id);
-
   if (!bookmark) {
     throw new NotFoundError(`Bookmakr data NOT_FOUND for id: ${request.params.userId}`);
   }
   response.send(bookmark);
-
 }));
 
 
@@ -165,5 +161,6 @@ router.get('/advanced-search', function (req, res) {
 
 module.exports = {
   getBookmarkByLocation: getBookmarkByLocation,
-  getLatestBookmarks: getLatestBookmarks
+  getLatestBookmarks: getLatestBookmarks,
+  getBookmarksForTag: getBookmarksForTag
 };

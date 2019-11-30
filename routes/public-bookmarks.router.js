@@ -53,21 +53,11 @@ router.get('/', AsyncWrapper.wrapAsync(async (request, response) => {
   return response.send(bookmarks);
 }));
 
+router.get('/tagged/:tag', AsyncWrapper.wrapAsync(async (request, response) => {
+  const orderByFilter = request.query.orderBy === 'STARS' ? {likes: -1} : {createdAt: -1};
+  const bookmarks = await PublicBookmarksService.getBookmarksForTag(request.params.tag, orderByFilter);
 
-router.get('/tagged/:tag', AsyncWrapper.wrapAsync(async (req, res) => {
-  const orderByFilter = req.query.orderBy === 'STARS' ? {likes: -1} : {createdAt: -1};
-
-  const bookmarks = await Bookmark.find({
-    shared: true,
-    tags: req.params.tag
-  })
-    .sort(orderByFilter)
-    .limit(MAX_NUMBER_RETURNED_RESULTS)
-    .lean()
-    .exec();
-
-  return res.send(bookmarks);
-
+  return response.send(bookmarks);
 }));
 
 /**
