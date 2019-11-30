@@ -13,10 +13,6 @@ const HttpStatus = require('http-status-codes');
 
 const AsyncWrapper = require('../../common/async-wrapper');
 
-//showdown converter - https://github.com/showdownjs/showdown
-const showdown = require('showdown'),
-  converter = new showdown.Converter();
-
 //add keycloak middleware
 const keycloak = new Keycloak({scope: 'openid'}, config.keycloak);
 adminRouter.use(keycloak.middleware());

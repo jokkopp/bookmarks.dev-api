@@ -1,25 +1,11 @@
-const express = require('express');
-const adminRouter = express.Router();
-
 const Bookmark = require('../../model/bookmark');
 const NotFoundError = require('../../error/not-found.error');
 const ValidationError = require('../../error/validation.error');
 
-const common = require('../../common/config');
-const config = common.config();
 const BookmarkInputValidator = require('../../common/bookmark-input.validator');
-
-const HttpStatus = require('http-status-codes');
-
-//showdown converter - https://github.com/showdownjs/showdown
-const showdown = require('showdown'),
-  converter = new showdown.Converter();
-
-
 
 /* GET all bookmarks */
 let getBookmarksWithFilter = async (isPublic, location, userId) => {
-
   let filter = {};
   if (isPublic) {
     filter.shared = true;
@@ -48,7 +34,6 @@ let getTagsOrderByNumberDesc = async () => {
   );
 
   return tags;
-
 };
 
 
@@ -152,7 +137,7 @@ let deleteBookmarkById = async (bookmarkId) => {
   });
 
   if (!bookmark) {
-    throw new NotFoundError(`Bookmark NOT_FOUND with id:${request.params.bookmarkId}`);
+    throw new NotFoundError(`Bookmark NOT_FOUND with id: ${bookmarkId}`);
   } else {
     return true;
   }

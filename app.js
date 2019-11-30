@@ -142,7 +142,7 @@ app.use(function handleValidationError(error, req, res, next) {
   next(error);
 });
 
-app.use(function handleDatabaseError(error, req, res, next) {
+app.use(function handleDatabaseError(error, request, response, next) {
   if (error instanceof MongoError) {
     if (error.code === 11000) {
       return response
@@ -152,7 +152,7 @@ app.use(function handleDatabaseError(error, req, res, next) {
           message: error.message
         });
     } else {
-      return res.status(503).json({
+      return response.status(503).json({
         type: 'MongoError',
         message: error.message
       });
