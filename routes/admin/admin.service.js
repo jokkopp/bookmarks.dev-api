@@ -27,7 +27,7 @@ adminRouter.use(keycloak.middleware());
 
 /* GET all bookmarks */
 let getBookmarksWithFilter = async (isPublic, location, userId) => {
-  let bookmarks;
+
   let filter = {};
   if (isPublic) {
     filter.shared = true;
@@ -38,13 +38,13 @@ let getBookmarksWithFilter = async (isPublic, location, userId) => {
   if (userId) {
     filter.userId = userId;
   }
-  bookmarks = await Bookmark.find(filter).sort({createdAt: -1}).lean().exec();
+  const bookmarks = await Bookmark.find(filter).sort({createdAt: -1}).lean().exec();
 
   return bookmarks;
 };
 
 
-adminRouter.get('/tags', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
+let getTagsOrderByNumberDesc = async () => {
   const tags = await Bookmark.aggregate(
     [
       {$match: {shared: true}},
@@ -55,9 +55,9 @@ adminRouter.get('/tags', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrap
     ]
   );
 
-  response.send(tags);
+  return tags;
 
-}));
+};
 
 
 /**
@@ -68,37 +68,35 @@ adminRouter.get('/tags', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrap
  * the query parameter numberOfDays. If not present it defaults to 7 days, last week.
  *
  */
-adminRouter.get('/bookmarks/latest-entries', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (req, res) => {
-  if (req.query.since) {
-    const fromDate = new Date(parseFloat(req.query.since, 0));
-    const toDate = req.query.to ? new Date(parseFloat(req.query.to, 0)) : new Date();
-    if (fromDate > toDate) {
-      throw new ValidationError('timing query parameters values', ['<Since> param value must be before <to> parameter value']);
-    }
-    const bookmarks = await Bookmark.find(
-      {
-        'shared': true,
-        createdAt: {
-          $gte: fromDate,
-          $lte: toDate
-        }
-      }
-    ).sort({createdAt: 'desc'}).lean().exec();
+let getLatestBookmarksBetweenDates = async (fromDate, toDate) => {
 
-    res.send(bookmarks);
-  } else {
-    const numberOfDaysToLookBack = req.query.days ? req.query.days : 7;
-
-    const bookmarks = await Bookmark.find(
-      {
-        'shared': true,
-        createdAt: {$gte: new Date((new Date().getTime() - (numberOfDaysToLookBack * 24 * 60 * 60 * 1000)))}
-      }
-    ).sort({createdAt: 'desc'}).lean().exec();
-
-    res.send(bookmarks);
+  if (fromDate > toDate) {
+    throw new ValidationError('timing query parameters values', ['<Since> param value must be before <to> parameter value']);
   }
-}));
+  const bookmarks = await Bookmark.find(
+    {
+      'shared': true,
+      createdAt: {
+        $gte: fromDate,
+        $lte: toDate
+      }
+    }
+  ).sort({createdAt: 'desc'}).lean().exec();
+
+  return bookmarks;
+}
+
+let getLatestBookmarksWithDaysBack = async (daysBack) => {
+
+  const bookmarks = await Bookmark.find(
+    {
+      'shared': true,
+      createdAt: {$gte: new Date((new Date().getTime() - (daysBack * 24 * 60 * 60 * 1000)))}
+    }
+  ).sort({createdAt: 'desc'}).lean().exec();
+
+  return bookmarks;
+}
 
 /* GET bookmark by id */
 adminRouter.get('/bookmarks/:bookmarkId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
@@ -212,5 +210,8 @@ adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrap
 
 
 module.exports = {
-  getBookmarksWithFilter: getBookmarksWithFilter
+  getBookmarksWithFilter: getBookmarksWithFilter,
+  getTagsOrderByNumberDesc: getTagsOrderByNumberDesc,
+  getLatestBookmarksBetweenDates: getLatestBookmarksBetweenDates,
+  getLatestBookmarksWithDaysBack: getLatestBookmarksWithDaysBack
 };
