@@ -132,7 +132,7 @@ personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(a
   return response.status(HttpStatus.NO_CONTENT).send();
 }));
 
-personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
+personalBookmarksRouter.delete('/', keycloak.protect(), AsyncWrapper.wrapAsync(async () => {
   throw new ValidationError('Missing parameters',
     ['You need to provide bookmark id or location to delete personal bookmarks'])
 }));

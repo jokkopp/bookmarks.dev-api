@@ -88,7 +88,7 @@ describe('Public API Tests', function () {
         }
 
         try {
-          const deleteBookmarkResponse = await request(app)
+          await request(app)
             .delete(`${basePathApiPersonalUsers}${testUserId}/bookmarks`)
             .query({'location': verySpecialLocation})
             .set('Authorization', bearerToken);

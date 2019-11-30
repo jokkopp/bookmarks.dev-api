@@ -1,4 +1,5 @@
 const User = require('../../model/user');
+const Bookmark = require('../../model/bookmark');
 
 const ValidationError = require('../../error/validation.error');
 const NotFoundError = require('../../error/not-found.error');
@@ -51,9 +52,9 @@ function validateUserData(userData, userId) {
 
   let validationErrorMessages = [];
 
-  const invalidUserIdInRequestBody = !userData.userId || userData.userId !== userId;
-  if (invalidUserIdInRequestBody) {
-    validationErrorMessages.push('Missing or invalid userId in the request body');
+  const invalidUserIdInUserData = !userData.userId || userData.userId !== userId;
+  if (invalidUserIdInUserData) {
+    validationErrorMessages.push('Missing or invalid userId in provided user data');
   }
 
   if (!userSearchesAreValid(userData)) {
@@ -102,7 +103,7 @@ let deleteUserData = async function (userId) {
   }
 }
 
-let getLaterReads = async function (request) {
+let getLaterReads = async function (userId) {
 
   const userData = await User.findOne({
     userId: userId

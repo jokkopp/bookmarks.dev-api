@@ -85,7 +85,7 @@ describe('User Data tests', function () {
       .set('Authorization', bearerToken);
 
     expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-    expect(response.body.validationErrors).to.include('Missing or invalid userId in the request body');
+    expect(response.body.validationErrors).to.include('Missing or invalid userId in provided user data');
   });
 
   it('should fail trying to UPDATE with invalid user Id in the body', async function () {
@@ -97,7 +97,7 @@ describe('User Data tests', function () {
       .set('Authorization', bearerToken);
 
     expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-    expect(response.body.validationErrors).to.include('Missing or invalid userId in the request body');
+    expect(response.body.validationErrors).to.include('Missing or invalid userId in provided user data');
   });
 
   it('should successfully UPDATE example user without searches', async function () {

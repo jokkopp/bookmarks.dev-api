@@ -9,7 +9,6 @@ const HttpStatus = require('http-status-codes');
 const expect = chai.expect;
 chai.should();
 
-const AsyncWrapper = require('../../common/async-wrapper');
 const jwt = require('jsonwebtoken');
 
 const common = require('../../common/config');
@@ -64,7 +63,7 @@ describe('Personal Bookmarks tests', function () {
         "lastAccessedAt": null
       }
 
-      const deleteIfExistingResponse = await request(app)
+      await request(app)
         .delete(`${baseApiUrlUnderTest}${testUserId}/bookmarks`)
         .query({'location': bookmarkExampleLocation})
         .set('Authorization', bearerToken);

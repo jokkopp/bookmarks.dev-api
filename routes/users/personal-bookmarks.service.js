@@ -1,22 +1,9 @@
-const express = require('express');
-const personalBookmarksRouter = express.Router({mergeParams: true});
-
 const Bookmark = require('../../model/bookmark');
 const User = require('../../model/user');
-const bookmarksSearchService = require('../../common/bookmarks-search.service');
-const UserIdValidator = require('./userid.validator');
-const AsyncWrapper = require('../../common/async-wrapper');
 
-const ValidationError = require('../../error/validation.error');
 const NotFoundError = require('../../error/not-found.error');
 
-const common = require('../../common/config');
-const config = common.config();
-
-const constants = require('../../common/constants');
 const BookmarkInputValidator = require('../../common/bookmark-input.validator');
-
-const HttpStatus = require('http-status-codes');
 
 /**
  * CREATE bookmark for user
@@ -55,7 +42,7 @@ let getBookmarkById = async (userId, bookmarkId) => {
   });
 
   if (!bookmark) {
-    throw new NotFoundError(`Bookmark NOT_FOUND the userId: ${request.params.userId} AND id: ${request.params.bookmarkId}`);
+    throw new NotFoundError(`Bookmark NOT_FOUND the userId: ${userId} AND id: ${bookmarkId}`);
   } else {
     return bookmark;
   }
@@ -70,7 +57,7 @@ let getBookmarkByLocation = async (userId, location) => {
   }).lean().exec();
 
   if (!bookmark) {
-    throw new NotFoundError(`Bookmark NOT_FOUND the userId: ${request.params.userId} AND id: ${request.params.bookmarkId}`);
+    throw new NotFoundError(`Bookmark NOT_FOUND the userId: ${userId} AND location: ${location}`);
   } else {
     return bookmark;
   }
