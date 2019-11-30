@@ -114,9 +114,7 @@ let getBookmarkById = async (bookmarkId) => {
 /**
  * create bookmark
  */
-adminRouter.post('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
-
-  const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
+let createBookmark = async (bookmark) => {
 
   BookmarkInputValidator.validateBookmarkInputForAdmin(bookmark);
 
@@ -124,12 +122,9 @@ adminRouter.post('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrappe
 
   let newBookmark = await bookmark.save();
 
-  response
-    .set('Location', `${config.basicApiUrl}private/${request.params.userId}/bookmarks/${newBookmark.id}`)
-    .status(HttpStatus.CREATED)
-    .send({response: 'Bookmark created for userId ' + request.params.userId});
+  return newBookmark;
 
-}));
+};
 
 
 /**
@@ -213,5 +208,6 @@ module.exports = {
   getTagsOrderByNumberDesc: getTagsOrderByNumberDesc,
   getLatestBookmarksBetweenDates: getLatestBookmarksBetweenDates,
   getLatestBookmarksWithDaysBack: getLatestBookmarksWithDaysBack,
-  getBookmarkById: getBookmarkById
+  getBookmarkById: getBookmarkById,
+  createBookmark: createBookmark
 };

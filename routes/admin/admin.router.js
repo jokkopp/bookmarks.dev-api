@@ -80,20 +80,13 @@ adminRouter.get('/bookmarks/:bookmarkId', keycloak.protect(), AsyncWrapper.wrapA
  * create bookmark
  */
 adminRouter.post('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
-
   const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
-
-  BookmarkInputValidator.validateBookmarkInputForAdmin(bookmark);
-
-  await BookmarkInputValidator.verifyPublicBookmarkExistenceOnCreation(bookmark);
-
-  let newBookmark = await bookmark.save();
+  let newBookmark = await AdminService.createBookmark(bookmark);
 
   response
     .set('Location', `${config.basicApiUrl}private/${request.params.userId}/bookmarks/${newBookmark.id}`)
     .status(HttpStatus.CREATED)
     .send({response: 'Bookmark created for userId ' + request.params.userId});
-
 }));
 
 
