@@ -72,16 +72,8 @@ adminRouter.get('/bookmarks/latest-entries', keycloak.protect('realm:ROLE_ADMIN'
 
 /* GET bookmark by id */
 adminRouter.get('/bookmarks/:bookmarkId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
-
-  const bookmark = await Bookmark.findOne({
-    _id: request.params.bookmarkId
-  });
-
-  if (!bookmark) {
-    throw new NotFoundError(`Bookmark NOT_FOUND with id:${request.params.bookmarkId}`);
-  } else {
-    response.status(HttpStatus.OK).send(bookmark);
-  }
+  const bookmark = await AdminService.getBookmarkById(request.params.bookmarkId);
+  return response.status(HttpStatus.OK).send(bookmark);
 }));
 
 /**

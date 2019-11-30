@@ -99,18 +99,17 @@ let getLatestBookmarksWithDaysBack = async (daysBack) => {
 }
 
 /* GET bookmark by id */
-adminRouter.get('/bookmarks/:bookmarkId', keycloak.protect(), AsyncWrapper.wrapAsync(async (request, response) => {
-
+let getBookmarkById = async (bookmarkId) => {
   const bookmark = await Bookmark.findOne({
-    _id: request.params.bookmarkId
+    _id: bookmarkId
   });
 
   if (!bookmark) {
-    throw new NotFoundError(`Bookmark NOT_FOUND with id:${request.params.bookmarkId}`);
+    throw new NotFoundError(`Bookmark NOT_FOUND with id:${bookmarkId}`);
   } else {
-    response.status(HttpStatus.OK).send(bookmark);
+    return bookmark;
   }
-}));
+};
 
 /**
  * create bookmark
@@ -213,5 +212,6 @@ module.exports = {
   getBookmarksWithFilter: getBookmarksWithFilter,
   getTagsOrderByNumberDesc: getTagsOrderByNumberDesc,
   getLatestBookmarksBetweenDates: getLatestBookmarksBetweenDates,
-  getLatestBookmarksWithDaysBack: getLatestBookmarksWithDaysBack
+  getLatestBookmarksWithDaysBack: getLatestBookmarksWithDaysBack,
+  getBookmarkById: getBookmarkById
 };
