@@ -95,27 +95,10 @@ adminRouter.post('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrappe
  * the descriptionHtml parameter is only set in backend, if only does not come front-end (might be an API call)
  */
 adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
-
   const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
+  const updatedBookmark = await AdminService.updateBookmark(bookmark);
 
-  BookmarkInputValidator.validateBookmarkInputForAdmin(bookmark);
-
-  await BookmarkInputValidator.verifyPublicBookmarkExistenceOnUpdate(bookmark, bookmark.userId);
-
-  const updatedBookmark = await Bookmark.findOneAndUpdate(
-    {
-      _id: request.params.bookmarkId
-    },
-    bookmark,
-    {new: true}
-  );
-
-  const bookmarkNotFound = !updatedBookmark;
-  if (bookmarkNotFound) {
-    throw new NotFoundError('Bookmark with the id ' + request.params.bookmarkId + ' not found');
-  } else {
-    return response.status(HttpStatus.OK).send(updatedBookmark);
-  }
+  return response.status(HttpStatus.OK).send(updatedBookmark);
 }));
 
 /*
@@ -159,6 +142,9 @@ adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrap
   }
 }));
 
+/**
+ * Report error if it reaches this point
+ */
 adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
   return response
     .status(HttpStatus.BAD_REQUEST)

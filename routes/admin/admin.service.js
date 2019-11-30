@@ -131,17 +131,13 @@ let createBookmark = async (bookmark) => {
  * full UPDATE via PUT - that is the whole document is required and will be updated
  * the descriptionHtml parameter is only set in backend, if only does not come front-end (might be an API call)
  */
-adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
-
-  const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
-
+let updateBookmark = async (bookmark) => {
   BookmarkInputValidator.validateBookmarkInputForAdmin(bookmark);
-
   await BookmarkInputValidator.verifyPublicBookmarkExistenceOnUpdate(bookmark, bookmark.userId);
 
   const updatedBookmark = await Bookmark.findOneAndUpdate(
     {
-      _id: request.params.bookmarkId
+      _id: bookmark._id
     },
     bookmark,
     {new: true}
@@ -149,11 +145,11 @@ adminRouter.put('/bookmarks/:bookmarkId', keycloak.protect('realm:ROLE_ADMIN'), 
 
   const bookmarkNotFound = !updatedBookmark;
   if (bookmarkNotFound) {
-    throw new NotFoundError('Bookmark with the id ' + request.params.bookmarkId + ' not found');
+    throw new NotFoundError('Bookmark with the id ' + bookmark._id + ' not found');
   } else {
-    return response.status(HttpStatus.OK).send(updatedBookmark);
+    return updatedBookmark;
   }
-}));
+};
 
 /*
 * DELETE bookmark for by bookmarkId
@@ -209,5 +205,6 @@ module.exports = {
   getLatestBookmarksBetweenDates: getLatestBookmarksBetweenDates,
   getLatestBookmarksWithDaysBack: getLatestBookmarksWithDaysBack,
   getBookmarkById: getBookmarkById,
-  createBookmark: createBookmark
+  createBookmark: createBookmark,
+  updateBookmark: updateBookmark
 };
