@@ -11,7 +11,6 @@ const ValidationError = require('../../error/validation.error');
 const common = require('../../common/config');
 const config = common.config();
 const BookmarkInputValidator = require('../../common/bookmark-input.validator');
-const AdminService = require('./admin.service');
 
 const HttpStatus = require('http-status-codes');
 
@@ -27,13 +26,22 @@ adminRouter.use(keycloak.middleware());
 
 
 /* GET all bookmarks */
-adminRouter.get('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
-  const isPublic = request.query.public === 'true';
-  const {location, userId} = request.query;
+let getBookmarksWithFilter = async (isPublic, location, userId) => {
+  let bookmarks;
+  let filter = {};
+  if (isPublic) {
+    filter.shared = true;
+  }
+  if (location) {
+    filter.location = location;
+  }
+  if (userId) {
+    filter.userId = userId;
+  }
+  bookmarks = await Bookmark.find(filter).sort({createdAt: -1}).lean().exec();
 
-  const bookmarks = await AdminService.getBookmarksWithFilter(isPublic, location, userId);
-  response.send(bookmarks);
-}));
+  return bookmarks;
+};
 
 
 adminRouter.get('/tags', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrapper.wrapAsync(async (request, response) => {
@@ -203,4 +211,6 @@ adminRouter.delete('/bookmarks', keycloak.protect('realm:ROLE_ADMIN'), AsyncWrap
 }));
 
 
-module.exports = adminRouter;
+module.exports = {
+  getBookmarksWithFilter: getBookmarksWithFilter
+};
