@@ -115,13 +115,13 @@ router.get('/scrape', function (req, res) {
 });
 
 /* GET bookmark by id. */
-router.get('/:id', AsyncWrapper.wrapAsync(async function (request, response) {
-  const bookmark = await Bookmark.findById(request.params.id);
+let getBookmarkById = async function (bookmarkId) {
+  const bookmark = await Bookmark.findById(bookmarkId);
   if (!bookmark) {
     throw new NotFoundError(`Bookmakr data NOT_FOUND for id: ${request.params.userId}`);
   }
-  response.send(bookmark);
-}));
+  return bookmark;
+};
 
 
 /* TODO - maybe implement later advancedSearch */
@@ -162,5 +162,6 @@ router.get('/advanced-search', function (req, res) {
 module.exports = {
   getBookmarkByLocation: getBookmarkByLocation,
   getLatestBookmarks: getLatestBookmarks,
-  getBookmarksForTag: getBookmarksForTag
+  getBookmarksForTag: getBookmarksForTag,
+  getBookmarkById: getBookmarkById
 };

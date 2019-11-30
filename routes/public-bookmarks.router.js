@@ -128,13 +128,8 @@ router.get('/scrape', function (req, res) {
 
 /* GET bookmark by id. */
 router.get('/:id', AsyncWrapper.wrapAsync(async function (request, response) {
-  const bookmark = await Bookmark.findById(request.params.id);
-
-  if (!bookmark) {
-    throw new NotFoundError(`Bookmakr data NOT_FOUND for id: ${request.params.userId}`);
-  }
+  const bookmark = await PublicBookmarksService.getBookmarkById(request.params.id);
   response.send(bookmark);
-
 }));
 
 
