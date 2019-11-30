@@ -15,19 +15,17 @@ describe('Public API Tests', function () {
   describe('get public bookmarks root endpoint tests', function () {
     const publicBookmarksApiBaseUrl = '/api/public/bookmarks';
 
-    it('should return all public bookmarks', function (done) {
-      request(app)
-        .get(publicBookmarksApiBaseUrl)
-        .end(function (err, res) {
-          expect(res.statusCode).to.equal(HttpStatus.OK);
-          done();
-        });
+    it('should return all public bookmarks', async function () {
+      const response = await request(app)
+        .get(publicBookmarksApiBaseUrl);
+
+      expect(response.statusCode).to.equal(HttpStatus.OK);
     });
 
     it('should not find bookmark by location', function (done) {
       request(app)
         .get(publicBookmarksApiBaseUrl)
-        .query({location: 'unknown_url'})
+        .query({location: 'unknown-url'})
         .end(function (err, res) {
           expect(res.statusCode).to.equal(HttpStatus.NOT_FOUND);
           done();
@@ -98,7 +96,7 @@ describe('Public API Tests', function () {
             .set('Authorization', bearerToken)
             .send(bookmarkExample);
 
-          if(createBookmarkResponse.statusCode !== HttpStatus.CREATED) {
+          if (createBookmarkResponse.statusCode !== HttpStatus.CREATED) {
             throw new Error("Sample bookmark not properly created");
           }
           const locationHeaderValue = createBookmarkResponse.header['location']
@@ -117,7 +115,7 @@ describe('Public API Tests', function () {
       }
     });
 
-   after(async function () {
+    after(async function () {
       await request(app)
         .delete(`${basePathApiPersonalUsers}${testUserId}/bookmarks/${createdBookmarkId}`)
         .set('Authorization', bearerToken);

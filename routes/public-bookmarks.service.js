@@ -10,49 +10,29 @@ const AsyncWrapper = require('../common/async-wrapper');
 const NotFoundError = require('../error/not-found.error');
 
 const bookmarksSearchService = require('../common/bookmarks-search.service');
-const PublicBookmarksService = require('./public-bookmarks.service');
-
 const superagent = require('superagent');
 
 const MAX_NUMBER_RETURNED_RESULTS = 100;
 
-/**
- *  Returns the with query text
- */
-router.get('/', AsyncWrapper.wrapAsync(async (request, response, next) => {
-  const searchText = request.query.q;
-  const limit = parseInt(request.query.limit);
-  if (searchText) {
-    const bookmarks = await bookmarksSearchService.findBookmarks(searchText, limit, constants.DOMAIN_PUBLIC, null);
-    response.send(bookmarks);
-  } else {
-    next()
+let getBookmarkByLocation = async (location) => {
+  const bookmark = await Bookmark.findOne({
+    'shared': true,
+    location: location
+  }).lean().exec();
+  if (!bookmark) {
+    throw new NotFoundError(`Bookmark NOT_FOUND for location: ${location}`);
   }
-}));
+  return bookmark;
+}
 
-/**
- * Get Bookmark by location
- */
-router.get('/', AsyncWrapper.wrapAsync(async (request, response, next) => {
-  const location = request.query.location;
-  if (location) {
-    const bookmark = await PublicBookmarksService.getBookmarkByLocation(location);
+let getLatestBookmarks = async () => {
+  const bookmarks = await Bookmark.find({'shared': true})
+    .sort({createdAt: -1})
+    .limit(MAX_NUMBER_RETURNED_RESULTS)
+    .lean().exec();
 
-    return response.send(bookmark);
-  } else {
-    next()
-  }
-}));
-
-/**
- * When no filter send latest public bookmarks
- */
-router.get('/', AsyncWrapper.wrapAsync(async (request, response) => {
-  const bookmarks = await PublicBookmarksService.getLatestBookmarks();
-
-  return response.send(bookmarks);
-}));
-
+  return bookmarks;
+}
 
 router.get('/tagged/:tag', AsyncWrapper.wrapAsync(async (req, res) => {
   const orderByFilter = req.query.orderBy === 'STARS' ? {likes: -1} : {createdAt: -1};
@@ -183,4 +163,7 @@ router.get('/advanced-search', function (req, res) {
 });
 
 
-module.exports = router;
+module.exports = {
+  getBookmarkByLocation: getBookmarkByLocation,
+  getLatestBookmarks: getLatestBookmarks
+};
