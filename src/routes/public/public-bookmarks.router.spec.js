@@ -12,24 +12,24 @@ const superagent = require('superagent');
 
 describe('Public API Tests', function () {
 
+  const basePathApiPublicBookmarks = '/api/public/bookmarks/';
+
   describe('get public bookmarks root endpoint tests', function () {
     const publicBookmarksApiBaseUrl = '/api/public/bookmarks';
 
     it('should return all public bookmarks', async function () {
       const response = await request(app)
-        .get(publicBookmarksApiBaseUrl);
+        .get(basePathApiPublicBookmarks);
 
       expect(response.statusCode).to.equal(HttpStatus.OK);
     });
 
-    it('should not find bookmark by location', function (done) {
-      request(app)
-        .get(publicBookmarksApiBaseUrl)
-        .query({location: 'unknown-url'})
-        .end(function (err, res) {
-          expect(res.statusCode).to.equal(HttpStatus.NOT_FOUND);
-          done();
-        });
+    it('should not find bookmark by location', async function () {
+      const response = await request(app)
+        .get(basePathApiPublicBookmarks)
+        .query({location: 'unknown-url'});
+
+      expect(response.statusCode).to.equal(HttpStatus.NOT_FOUND);
     });
   });
 
@@ -40,8 +40,6 @@ describe('Public API Tests', function () {
 
     let testUserId;
     const basePathApiPersonalUsers = '/api/personal/users/';
-
-    const basePathApiPublicBookmarks = '/api/public/bookmarks/';
 
     const verySpecialTitle = "very special title very-special-java-title - public";
     const verySpecialLocation = "http://www.very-special-url.com/public-api-tests";
@@ -219,4 +217,26 @@ describe('Public API Tests', function () {
     });
 
   });
+
+  describe('Test scrape functionality', function () {
+    it('should fail when trying to scrape with no query parameters', async function () {
+      const response = await request(app)
+        .get(basePathApiPublicBookmarks + '/scrape');
+
+      expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
+      expect(response.body.message).to.equal('Missing parameters - url or youtubeVideoId');
+      expect(response.body.validationErrors).to.include('You need to provide the url to scrape for or the youtubeVideoId');
+    });
+
+    it('should succeed scraping website', async function () {
+      const response = await request(app)
+        .get(basePathApiPublicBookmarks + '/scrape')
+        .query({location: 'https://www.bookmarks.dev'});
+
+      expect(response.statusCode).to.equal(HttpStatus.OK);
+      expect(response.body.title).to.equal('Dev Bookmarks');
+      expect(response.body.metaDescription).to.contain('Bookmarking for Developers & Co');
+    });
+  });
+
 });

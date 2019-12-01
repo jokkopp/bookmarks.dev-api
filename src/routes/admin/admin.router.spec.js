@@ -149,7 +149,7 @@ describe('Admin API Tests', function () {
         .send(bookmarkWithoutName);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('Missing required attribute - name');
     });
 
@@ -163,7 +163,7 @@ describe('Admin API Tests', function () {
         .send(bookmarkdWithoutUserId);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('Missing required attribute - userId');
     });
 
@@ -177,7 +177,7 @@ describe('Admin API Tests', function () {
         .send(bookmarkWithoutLocation);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('Missing required attribute - location');
     });
 
@@ -191,7 +191,7 @@ describe('Admin API Tests', function () {
         .send(bookmarkWithoutTags);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('Missing required attribute - tags');
     });
 
@@ -205,7 +205,7 @@ describe('Admin API Tests', function () {
         .send(bookmark_with_too_many_tags);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('Too many tags have been submitted - max allowed 8');
     });
 
@@ -224,7 +224,7 @@ describe('Admin API Tests', function () {
         .send(bookmark_with_a_too_big_description);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed');
     });
 
@@ -338,7 +338,7 @@ describe('Admin API Tests', function () {
           .send(bookmark_without_title);
 
         expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-        expect(response.body.name).to.equal('ValidationError');
+        expect(response.body.message).to.equal('The bookmark you submitted is not valid');
         expect(response.body.validationErrors).to.include('Missing required attribute - name');
       });
 
@@ -353,7 +353,7 @@ describe('Admin API Tests', function () {
           .send(bookmark_without_location);
 
         expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-        expect(response.body.name).to.equal('ValidationError');
+        expect(response.body.message).to.equal('The bookmark you submitted is not valid');
         expect(response.body.validationErrors).to.include('Missing required attribute - location');
       });
 
@@ -367,7 +367,7 @@ describe('Admin API Tests', function () {
           .send(bookmark_without_userid);
 
         expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-        expect(response.body.name).to.equal('ValidationError');
+        expect(response.body.message).to.equal('The bookmark you submitted is not valid');
         expect(response.body.validationErrors).to.include('Missing required attribute - userId');
       });
 
@@ -381,7 +381,7 @@ describe('Admin API Tests', function () {
           .send(bookmark_without_tags);
 
         expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-        expect(response.body.name).to.equal('ValidationError');
+        expect(response.body.message).to.equal('The bookmark you submitted is not valid');
         expect(response.body.validationErrors).to.include('Missing required attribute - tags');
       });
 
@@ -395,7 +395,7 @@ describe('Admin API Tests', function () {
           .send(bookmark_with_too_many_tags);
 
         expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-        expect(response.body.name).to.equal('ValidationError');
+        expect(response.body.message).to.equal('The bookmark you submitted is not valid');
         expect(response.body.validationErrors).to.include('Too many tags have been submitted - max allowed 8');
       });
 
@@ -414,7 +414,7 @@ describe('Admin API Tests', function () {
           .send(invalidBookmark);
 
         expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-        expect(response.body.name).to.equal('ValidationError');
+        expect(response.body.message).to.equal('The bookmark you submitted is not valid');
         expect(response.body.validationErrors).to.include('The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed');
       });
 

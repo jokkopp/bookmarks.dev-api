@@ -10,7 +10,7 @@ const versionRouter = require('./routes/version/version');
 const userRouter = require('./routes/users/user.router');
 const adminRouter = require('./routes/admin/admin.router');
 const publicBookmarksRouter = require('./routes/public/public-bookmarks.router');
-const { MongoError } = require('mongodb');
+const {MongoError} = require('mongodb');
 const ValidationError = require('./error/validation.error');
 const NotFoundError = require('./error/not-found.error');
 const PublicBookmarkExistingError = require('./error/public-bookmark-existent.error');
@@ -106,7 +106,7 @@ if (app.get('env') === 'development') {
 
 app.use(function handleNotFoundError(error, req, res, next) {
   if (error instanceof NotFoundError) {
-   return res.status(HttpStatus.NOT_FOUND).send({
+    return res.status(HttpStatus.NOT_FOUND).send({
       message: error.message,
       error: {}
     });
@@ -116,7 +116,7 @@ app.use(function handleNotFoundError(error, req, res, next) {
 
 app.use(function handlePublicBookmarkExistingError(error, req, res, next) {
   if (error instanceof PublicBookmarkExistingError) {
-   return res.status(HttpStatus.CONFLICT).send({
+    return res.status(HttpStatus.CONFLICT).send({
       message: error.message,
       error: {}
     });
@@ -135,9 +135,15 @@ app.use(function handleUserIdValidationError(error, req, res, next) {
   next(error);
 });
 
-app.use(function handleValidationError(error, req, res, next) {
+app.use(function handleValidationError(error, request, response, next) {
   if (error instanceof ValidationError) {
-    return res.status(HttpStatus.BAD_REQUEST).send(error);
+    return response
+      .status(HttpStatus.BAD_REQUEST)
+      .json({
+        httpStatus: HttpStatus.BAD_REQUEST,
+        message: error.message,
+        validationErrors: error.validationErrors
+      });
   }
   next(error);
 });

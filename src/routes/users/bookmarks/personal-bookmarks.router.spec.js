@@ -122,7 +122,7 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('Missing required attribute - name');
     });
 
@@ -136,7 +136,7 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('Missing required attribute - location');
     });
 
@@ -150,7 +150,7 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark)
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('Missing required attribute - tags');
     });
 
@@ -164,7 +164,7 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('Too many tags have been submitted - max allowed 8');
     });
 
@@ -178,7 +178,7 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('The following tags are blocked: awesome awesome-java');
     });
 
@@ -197,7 +197,7 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark)
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('The description is too long. Only ' + constants.MAX_NUMBER_OF_CHARS_FOR_DESCRIPTION + ' allowed');
     });
 
@@ -216,7 +216,7 @@ describe('Personal Bookmarks tests', function () {
         .send(invalidBookmark);
 
       expect(response.statusCode).to.equal(HttpStatus.BAD_REQUEST);
-      expect(response.body.name).to.equal('ValidationError');
+      expect(response.body.message).to.equal('The bookmark you submitted is not valid');
       expect(response.body.validationErrors).to.include('The description hast too many lines. Only ' + constants.MAX_NUMBER_OF_LINES_FOR_DESCRIPTION + ' allowed');
     });
 
