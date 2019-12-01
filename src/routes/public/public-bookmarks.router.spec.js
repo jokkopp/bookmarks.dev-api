@@ -121,27 +121,23 @@ describe('Public API Tests', function () {
         .set('Authorization', bearerToken);
     });
 
-    it('should find bookmark by location query param', function (done) {
-      request(app)
+    it('should find bookmark by location query param', async function () {
+      const response = await request(app)
         .get(basePathApiPublicBookmarks)
-        .query({location: verySpecialLocation})
-        .end(function (err, res) {
-          expect(res.statusCode).to.equal(HttpStatus.OK);
-          done();
-        });
+        .query({location: verySpecialLocation});
+
+      expect(response.statusCode).to.equal(HttpStatus.OK);
     });
 
-    it('should find bookmark tagged with very-special-tag', function (done) {
-      request(app)
-        .get(basePathApiPublicBookmarks + 'tagged/' + verySpecialTag)
-        .end(function (err, response) {
-          expect(response.statusCode).to.equal(HttpStatus.OK);
-          const filteredBookmarks = response.body;
-          const foundBookmark = filteredBookmarks[0];
-          expect(filteredBookmarks.length).to.equal(1);
-          expect(foundBookmark.name).to.equal(verySpecialTitle);
-          done();
-        });
+    it('should find bookmark tagged with very-special-tag', async function () {
+      const response = await request(app)
+        .get(basePathApiPublicBookmarks + 'tagged/' + verySpecialTag);
+
+      expect(response.statusCode).to.equal(HttpStatus.OK);
+      const filteredBookmarks = response.body;
+      const foundBookmark = filteredBookmarks[0];
+      expect(filteredBookmarks.length).to.equal(1);
+      expect(foundBookmark.name).to.equal(verySpecialTitle);
     });
 
     it('should find bookmark with with very-special-tag in query param as word', async function () {
@@ -157,79 +153,69 @@ describe('Public API Tests', function () {
       expect(foundBookmark.name).to.equal(verySpecialTitle);
     });
 
-    it('should find bookmark with with very-special-tag in query param only as tag', function (done) {
-      request(app)
+    it('should find bookmark with with very-special-tag in query param only as tag', async function () {
+      const response = await request(app)
         .get(basePathApiPublicBookmarks)
         .query({q: `[${verySpecialTag}]`})
-        .query({limit: 10})
-        .end(function (err, response) {
-          expect(response.statusCode).to.equal(HttpStatus.OK);
-          const filteredBookmarks = response.body;
-          const foundBookmark = filteredBookmarks[0];
-          expect(filteredBookmarks.length).to.equal(1);
-          expect(foundBookmark.name).to.equal(verySpecialTitle);
-          done();
-        });
+        .query({limit: 10});
+
+      expect(response.statusCode).to.equal(HttpStatus.OK);
+      const filteredBookmarks = response.body;
+      const foundBookmark = filteredBookmarks[0];
+      expect(filteredBookmarks.length).to.equal(1);
+      expect(foundBookmark.name).to.equal(verySpecialTitle);
     });
 
-    it('should find bookmark with with very-special-tag in query param as tag and word', function (done) {
-      request(app)
+    it('should find bookmark with with very-special-tag in query param as tag and word', async function () {
+      const response = await request(app)
         .get(basePathApiPublicBookmarks)
         .query({q: `${verySpecialTag} [${verySpecialTag}]`})
-        .query({limit: 10})
-        .end(function (err, response) {
-          expect(response.statusCode).to.equal(HttpStatus.OK);
-          const filteredBookmarks = response.body;
-          const foundBookmark = filteredBookmarks[0];
-          expect(filteredBookmarks.length).to.equal(1);
-          expect(foundBookmark.name).to.equal(verySpecialTitle);
-          done();
-        });
+        .query({limit: 10});
+
+      expect(response.statusCode).to.equal(HttpStatus.OK);
+      const filteredBookmarks = response.body;
+      const foundBookmark = filteredBookmarks[0];
+      expect(filteredBookmarks.length).to.equal(1);
+      expect(foundBookmark.name).to.equal(verySpecialTitle);
     });
 
-    it(`should find bookmark with special title - ${verySpecialTitle} `, function (done) {
-      request(app)
+    it(`should find bookmark with special title - ${verySpecialTitle} `, async function () {
+      const response = await request(app)
         .get(basePathApiPublicBookmarks)
         .query({q: `${verySpecialTitle}`})
-        .query({limit: 10})
-        .end(function (err, response) {
-          expect(response.statusCode).to.equal(HttpStatus.OK);
-          const filteredBookmarks = response.body;
-          const foundBookmark = filteredBookmarks[0];
-          expect(filteredBookmarks.length).to.equal(1);
-          expect(foundBookmark.name).to.equal(verySpecialTitle);
-          done();
-        });
+        .query({limit: 10});
+
+      expect(response.statusCode).to.equal(HttpStatus.OK);
+      const filteredBookmarks = response.body;
+      const foundBookmark = filteredBookmarks[0];
+      expect(filteredBookmarks.length).to.equal(1);
+      expect(foundBookmark.name).to.equal(verySpecialTitle);
     });
 
-    it(`should find bookmark with special source code url title - ${verySpecialSourceCodeUrl} `, function (done) {
-      request(app)
+    it(`should find bookmark with special source code url title - ${verySpecialSourceCodeUrl} `, async function () {
+      const response = await request(app)
         .get(basePathApiPublicBookmarks)
         .query({q: `${verySpecialSourceCodeUrl}`})
-        .query({limit: 10})
-        .end(function (err, response) {
-          expect(response.statusCode).to.equal(HttpStatus.OK);
-          const filteredBookmarks = response.body;
-          const foundBookmark = filteredBookmarks[0];
-          expect(filteredBookmarks.length).to.equal(1);
-          expect(foundBookmark.name).to.equal(verySpecialTitle);
-          done();
-        });
+        .query({limit: 10});
+
+      expect(response.statusCode).to.equal(HttpStatus.OK);
+      const filteredBookmarks = response.body;
+      const foundBookmark = filteredBookmarks[0];
+      expect(filteredBookmarks.length).to.equal(1);
+      expect(foundBookmark.name).to.equal(verySpecialTitle);
     });
 
-    it(`should find bookmark with special location - ${verySpecialLocation} `, function (done) {
-      request(app)
+    it(`should find bookmark with special location - ${verySpecialLocation} `, async function () {
+      const response = await request(app)
         .get(basePathApiPublicBookmarks)
         .query({q: `${verySpecialLocation}`})
-        .query({limit: 10})
-        .end(function (err, response) {
-          expect(response.statusCode).to.equal(HttpStatus.OK);
-          const filteredBookmarks = response.body;
-          const foundBookmark = filteredBookmarks[0];
-          expect(filteredBookmarks.length).to.equal(1);
-          expect(foundBookmark.name).to.equal(verySpecialTitle);
-          done();
-        });
+        .query({limit: 10});
+
+      expect(response.statusCode).to.equal(HttpStatus.OK);
+      const filteredBookmarks = response.body;
+      const foundBookmark = filteredBookmarks[0];
+      expect(filteredBookmarks.length).to.equal(1);
+      expect(foundBookmark.name).to.equal(verySpecialTitle);
     });
 
   });
