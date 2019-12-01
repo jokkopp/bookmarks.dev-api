@@ -1,4 +1,4 @@
-const app = require('../../app');
+const app = require('../../../app');
 const chai = require('chai');
 const chaiAsPromised = require("chai-as-promised");
 
@@ -11,9 +11,9 @@ chai.should();
 
 const jwt = require('jsonwebtoken');
 
-const common = require('../../common/config');
+const common = require('../../../common/config');
 const config = common.config();
-const constants = require('../../common/constants');
+const constants = require('../../../common/constants');
 
 const superagent = require('superagent');
 

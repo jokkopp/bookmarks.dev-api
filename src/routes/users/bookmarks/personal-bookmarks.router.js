@@ -2,18 +2,18 @@ const express = require('express');
 const personalBookmarksRouter = express.Router({mergeParams: true});
 const Keycloak = require('keycloak-connect');
 
-const bookmarkHelper = require('../../common/bookmark-helper');
-const bookmarksSearchService = require('../../common/bookmarks-search.service');
+const bookmarkHelper = require('../../../common/bookmark-helper');
+const bookmarksSearchService = require('../../../common/bookmarks-search.service');
 const PersonalBookmarksService = require('./personal-bookmarks.service');
-const UserIdValidator = require('./userid.validator');
-const AsyncWrapper = require('../../common/async-wrapper');
+const UserIdValidator = require('../userid.validator');
+const AsyncWrapper = require('../../../common/async-wrapper');
 
-const ValidationError = require('../../error/validation.error');
+const ValidationError = require('../../../error/validation.error');
 
-const common = require('../../common/config');
+const common = require('../../../common/config');
 const config = common.config();
 
-const constants = require('../../common/constants');
+const constants = require('../../../common/constants');
 
 const HttpStatus = require('http-status-codes/index');
 

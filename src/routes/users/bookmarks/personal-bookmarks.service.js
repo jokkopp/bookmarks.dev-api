@@ -1,9 +1,9 @@
-const Bookmark = require('../../model/bookmark');
-const User = require('../../model/user');
+const Bookmark = require('../../../model/bookmark');
+const User = require('../../../model/user');
 
-const NotFoundError = require('../../error/not-found.error');
+const NotFoundError = require('../../../error/not-found.error');
 
-const BookmarkInputValidator = require('../../common/bookmark-input.validator');
+const BookmarkInputValidator = require('../../../common/bookmark-input.validator');
 
 /**
  * CREATE bookmark for user
