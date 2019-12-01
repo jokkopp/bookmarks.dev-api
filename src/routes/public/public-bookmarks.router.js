@@ -1,11 +1,11 @@
 var express = require('express');
 var router = express.Router();
-const constants = require('../common/constants');
+const constants = require('../../common/constants');
 
-const AsyncWrapper = require('../common/async-wrapper');
-const ValidationError = require('../error/validation.error');
+const AsyncWrapper = require('../../common/async-wrapper');
+const ValidationError = require('../../error/validation.error');
 
-const bookmarksSearchService = require('../common/bookmarks-search.service');
+const bookmarksSearchService = require('../../common/bookmarks-search.service');
 const PublicBookmarksService = require('./public-bookmarks.service');
 
 /**

@@ -1,8 +1,8 @@
 var request = require('superagent');
 var cheerio = require('cheerio');
-var Bookmark = require('../model/bookmark');
+var Bookmark = require('../../model/bookmark');
 
-const NotFoundError = require('../error/not-found.error');
+const NotFoundError = require('../../error/not-found.error');
 
 const MAX_NUMBER_RETURNED_RESULTS = 100;
 

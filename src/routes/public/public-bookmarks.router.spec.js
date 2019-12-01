@@ -1,11 +1,11 @@
-const app = require('../app');
+const app = require('../../app');
 const chai = require('chai');
 const request = require('supertest');
-const HttpStatus = require('http-status-codes');
+const HttpStatus = require('http-status-codes/index');
 const expect = chai.expect;
 const jwt = require('jsonwebtoken');
 
-const common = require('../common/config');
+const common = require('../../common/config');
 const config = common.config();
 
 const superagent = require('superagent');

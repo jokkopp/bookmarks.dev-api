@@ -15,7 +15,7 @@ const config = common.config();
 
 const constants = require('../../common/constants');
 
-const HttpStatus = require('http-status-codes');
+const HttpStatus = require('http-status-codes/index');
 
 //add keycloak middleware
 const keycloak = new Keycloak({scope: 'openid'}, config.keycloak);

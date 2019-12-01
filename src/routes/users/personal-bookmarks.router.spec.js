@@ -5,7 +5,7 @@ const chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
 
 const request = require('supertest');
-const HttpStatus = require('http-status-codes');
+const HttpStatus = require('http-status-codes/index');
 const expect = chai.expect;
 chai.should();
 

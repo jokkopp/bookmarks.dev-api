@@ -5,11 +5,11 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
-const apiBasePathRouter = require('./routes/index');
-const versionRouter = require('./routes/version');
+const apiBasePathRouter = require('./routes');
+const versionRouter = require('./routes/version/version');
 const userRouter = require('./routes/users/user.router');
 const adminRouter = require('./routes/admin/admin.router');
-const publicBookmarksRouter = require('./routes/public-bookmarks.router');
+const publicBookmarksRouter = require('./routes/public/public-bookmarks.router');
 const { MongoError } = require('mongodb');
 const ValidationError = require('./error/validation.error');
 const NotFoundError = require('./error/not-found.error');
@@ -17,9 +17,9 @@ const PublicBookmarkExistingError = require('./error/public-bookmark-existent.er
 const UseridTokenValidationError = require('./routes/users/userid-validation.error');
 
 const fs = require('fs-extra');
-const rfs = require('rotating-file-stream');
+const rfs = require('rotating-file-stream/index');
 
-const HttpStatus = require('http-status-codes');
+const HttpStatus = require('http-status-codes/index');
 
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');

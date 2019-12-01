@@ -12,7 +12,7 @@ const userIdTokenValidator = require('./userid.validator');
 const common = require('../../common/config');
 const config = common.config();
 
-const HttpStatus = require('http-status-codes');
+const HttpStatus = require('http-status-codes/index');
 
 //add keycloak middleware
 const keycloak = new Keycloak({scope: 'openid'}, config.keycloak);

@@ -9,7 +9,7 @@ const common = require('../../common/config');
 const config = common.config();
 const AdminService = require('./admin.service');
 
-const HttpStatus = require('http-status-codes');
+const HttpStatus = require('http-status-codes/index');
 
 const AsyncWrapper = require('../../common/async-wrapper');
 
