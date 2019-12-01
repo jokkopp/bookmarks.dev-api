@@ -58,6 +58,18 @@ This will start the API with [nodemon](http://nodemon.io) and will watch for cod
 > To be able to automatically add youtube videos published date and duration to the title you need to 
 create a _nodemon.json_ file based on the [nodemon.json.example](nodemon.json.example) and a real youtube api key
 
+#### Debugging
+
+##### IntelliJ / Wegstorm (Node.js plugin is required)
+The ``npm run debug`` starts nodemon with the `--inspect` parameter so you can attach to this process, by using the following configuration:
+![nodejs-remote-debugging](docs/debugging/attach-to-nodemon-process.png)
+
+
+
+##### Visual Studio Code
+See [Node.js debugging in VS Code with Nodemon](https://github.com/microsoft/vscode-recipes/tree/master/nodemon)
+
+
 #### Get Keycloak access token via API call
 To get a keycloak access token via API call see [Get Access Token from Keycloak via API call](docs/keycloak/get-access-token.md)
 
