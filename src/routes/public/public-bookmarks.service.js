@@ -89,7 +89,7 @@ let getYoutubeVideoData = async (youtubeVideoId) => {
 
   const webpageData = {
     title: title,
-    metaDescription: description,
+    metaDescription: description.substring(0, 500),
     publishedOn: publishedOn,
     videoDuration: videoDuration
   }
