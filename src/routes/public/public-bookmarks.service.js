@@ -3,7 +3,7 @@ var cheerio = require('cheerio');
 var Bookmark = require('../../model/bookmark');
 
 const NotFoundError = require('../../error/not-found.error');
-
+const HttpStatus = require('http-status-codes/index');
 const MAX_NUMBER_RETURNED_RESULTS = 100;
 
 let getBookmarkByLocation = async (location) => {
@@ -42,10 +42,10 @@ let getBookmarksForTag = async (tag, orderByFilter) => {
 
 /* GET title of bookmark given its url */
 let getScrapedDataForLocation = async (location) => {
-  const response = await request(location);
+  const response = await request.get(location);
 
-  if (response.statusCode == 200) {
-    const $ = cheerio.load(response.body);
+  if (response.statusCode == HttpStatus.OK) {
+    const $ = cheerio.load(response.text);
     const webpageTitle = $("title").text();
     const metaDescription = $('meta[name=description]').attr("content");
     const webpageData = {

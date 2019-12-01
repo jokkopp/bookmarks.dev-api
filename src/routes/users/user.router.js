@@ -1,6 +1,6 @@
 const express = require('express');
 const usersRouter = express.Router();
-const personalBookmarksRouter = require('./personal-bookmarks.router');
+const personalBookmarksRouter = require('./bookmarks/personal-bookmarks.router');
 
 const Keycloak = require('keycloak-connect');
 

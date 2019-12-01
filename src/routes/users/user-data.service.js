@@ -218,7 +218,7 @@ let rateBookmark = async function (receivedUserData, userId, bookmarkId) {
   } else {
     if (receivedUserData.action === 'LIKE') {
       return await likeBookmark(userData, userId, bookmarkId);
-    } else if (receivedUserData.body.action === 'UNLIKE') {
+    } else if (receivedUserData.action === 'UNLIKE') {
       return await dislikeBookmark(userData, userId, bookmarkId);
     }
   }

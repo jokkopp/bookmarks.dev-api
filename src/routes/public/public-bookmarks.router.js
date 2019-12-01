@@ -52,17 +52,11 @@ router.get('/tagged/:tag', AsyncWrapper.wrapAsync(async (request, response) => {
   return response.send(bookmarks);
 }));
 
-/* GET bookmark by id. */
-router.get('/:id', AsyncWrapper.wrapAsync(async function (request, response) {
-  const bookmark = await PublicBookmarksService.getBookmarkById(request.params.id);
-  response.send(bookmark);
-}));
-
 /* GET title of bookmark given its url - might be moved to front-end */
 router.get('/scrape', async function (request, response, next) {
   const location = request.query.location;
   if (location) {
-    const webpageData = PublicBookmarksService.getScrapedDataForLocation(location);
+    const webpageData = await PublicBookmarksService.getScrapedDataForLocation(location);
 
     return response.send(webpageData);
   } else {
@@ -71,21 +65,32 @@ router.get('/scrape', async function (request, response, next) {
 });
 
 /* GET youtube video data */
-router.get('/scrape', async function (request, response, next) {
+router.get('/scrape', AsyncWrapper.wrapAsync(async function (request, response, next) {
   const youtubeVideoId = request.query.youtubeVideoId;
   if (youtubeVideoId) {
-    const webpageData = PublicBookmarksService.getYoutubeVideoData(youtubeVideoId)
+    const webpageData = await PublicBookmarksService.getYoutubeVideoData(youtubeVideoId)
 
     return response.send(webpageData);
   } else {
     next();
   }
-});
+}));
 
 /* GET title of bookmark given its url */
-router.get('/scrape', async function () {
+router.get('/scrape', AsyncWrapper.wrapAsync(async function () {
   throw new ValidationError('Missing parameters - url or youtubeVideoId',
     ['You need to provide the url to scrape for or the youtubeVideoId']);
-});
+}));
+
+/**
+ *  GET bookmark by id.
+ *  This needs to be the last call to avoid to "tagged" and "scrape" endpoints, which throw then errors
+ */
+
+router.get('/:id', AsyncWrapper.wrapAsync(async function (request, response) {
+  const bookmark = await PublicBookmarksService.getBookmarkById(request.params.id);
+  response.send(bookmark);
+}));
+
 
 module.exports = router;
