@@ -1,6 +1,6 @@
 # Bookmarks.dev-API
 
-Back-end API for the [www.bookmarks.dev](http://www.bookmarks.dev).
+Back-end REST API for [www.bookmarks.dev](http://www.bookmarks.dev).
 
 ## Built With
 * [MongoDB](https://docs.mongodb.com/manual/)
