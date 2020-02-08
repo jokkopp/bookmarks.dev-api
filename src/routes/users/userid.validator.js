@@ -4,7 +4,7 @@ const UseridTokenValidationError = require('./userid-validation.error');
 let validateUserId = function (request) {
   const userId = request.kauth.grant.access_token.content.sub;
   if (userId !== request.params.userId) {
-    throw new UseridTokenValidationError('the userId does not match the subject in the access token');
+    throw new UseridTokenValidationError('The userId does not match the subject in the access token');
   }
 }
 

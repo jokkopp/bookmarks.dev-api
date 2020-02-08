@@ -107,7 +107,7 @@ personalBookmarksRouter.get('/:bookmarkId', keycloak.protect(), async (request, 
  */
 personalBookmarksRouter.put('/:bookmarkId', keycloak.protect(), async (request, response) => {
 
-  UserIdValidator.validateIsAdminOrUserId(request);
+  UserIdValidator.validateUserId(request);
 
   const bookmark = bookmarkHelper.buildBookmarkFromRequest(request);
 
@@ -137,7 +137,7 @@ personalBookmarksRouter.post('/:bookmarkId/owner-visits/inc', keycloak.protect()
 */
 personalBookmarksRouter.delete('/:bookmarkId', keycloak.protect(), async (request, response) => {
 
-  UserIdValidator.validateIsAdminOrUserId(request);
+  UserIdValidator.validateUserId(request);
 
   await PersonalBookmarksService.deleteBookmarkById(request.params.userId, request.params.bookmarkId);
   return response.status(HttpStatus.NO_CONTENT).send();
@@ -147,7 +147,7 @@ personalBookmarksRouter.delete('/:bookmarkId', keycloak.protect(), async (reques
 * DELETE bookmark for user by location
 */
 personalBookmarksRouter.delete('/', keycloak.protect(), async (request, response, next) => {
-  UserIdValidator.validateIsAdminOrUserId(request);
+  UserIdValidator.validateUserId(request);
 
   const location = request.query.location;
   if (location) {
@@ -163,7 +163,7 @@ personalBookmarksRouter.delete('/', keycloak.protect(), async (request, response
 * DELETE private bookmarks for user and tag
 */
 personalBookmarksRouter.delete('/', keycloak.protect(), async (request, response, next) => {
-  UserIdValidator.validateIsAdminOrUserId(request);
+  UserIdValidator.validateUserId(request);
 
   const {tag, type} = request.query;
   if (tag && type === 'private') {
