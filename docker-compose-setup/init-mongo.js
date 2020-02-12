@@ -33,7 +33,7 @@ db.bookmarks.insert(
       "githubURL": "",
       "public": true,
       "lastAccessedAt": ISODate("2019-10-23T12:22:10.480Z"),
-      "likes": 0,
+      "likeCount": 0,
       "createdAt": ISODate("2019-10-23T12:22:10.526Z"),
       "updatedAt": ISODate("2019-10-23T12:22:10.526Z"),
       "__v": 0
@@ -54,7 +54,7 @@ db.bookmarks.insert(
       "githubURL": "https://github.com/CodepediaOrg/bookmarks.dev",
       "public": true,
       "lastAccessedAt": ISODate("2019-10-23T12:23:53.471Z"),
-      "likes": 0,
+      "likeCount": 0,
       "createdAt": ISODate("2019-10-23T12:23:53.486Z"),
       "updatedAt": ISODate("2019-10-23T12:23:53.486Z"),
       "__v": 0
@@ -76,7 +76,7 @@ db.bookmarks.insert(
       "githubURL": "https://github.com/CodepediaOrg/bookmarks",
       "public": true,
       "lastAccessedAt": ISODate("2019-10-23T12:24:50.804Z"),
-      "likes": 0,
+      "likeCount": 0,
       "createdAt": ISODate("2019-10-23T12:24:50.823Z"),
       "updatedAt": ISODate("2019-10-23T12:24:50.823Z"),
       "__v": 0

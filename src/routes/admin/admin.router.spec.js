@@ -48,7 +48,7 @@ describe('Admin API Tests', function () {
       "descriptionHtml": "<p>Example showing migration of Mongoose calls from previously using callbacks to using the new async-await feature in NodeJs</p>",
       "userId": "some-user-id-for-admin-api-tests",
       "public": true,
-      "likes": 0,
+      "likeCount": 0,
       "lastAccessedAt": null
     }
   });

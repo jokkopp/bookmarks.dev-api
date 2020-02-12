@@ -58,7 +58,7 @@ describe('Personal Bookmarks tests', function () {
         "descriptionHtml": "<p>Example showing migration of Mongoose calls from previously using callbacks to using the new async-await feature in NodeJs</p>",
         "userId": testUserId,
         "public": true,
-        "likes": 0,
+        "likeCount": 0,
         "lastAccessedAt": null
       }
 
@@ -453,7 +453,7 @@ describe('Personal Bookmarks tests', function () {
         "descriptionHtml": "<p>This is a very special bookmark used for testing the search functionality. Indeed very-special-bookmark</p>",
         "userId": testUserId,
         "public": false,
-        "likes": 0,
+        "likeCount": 0,
         "lastAccessedAt": null
       }
 

@@ -337,7 +337,7 @@ let likeBookmark = async function (userData, userId, bookmarkId) {
       {$push: {likes: bookmarkId}}
     );
 
-    const bookmark = await Bookmark.findOneAndUpdate({_id: bookmarkId}, {$inc: {likes: 1}});
+    const bookmark = await Bookmark.findOneAndUpdate({_id: bookmarkId}, {$inc: {likeCount: 1}});
 
     const bookmarkNotFound = !bookmark;
     if ( bookmarkNotFound ) {
@@ -358,7 +358,7 @@ let dislikeBookmark = async function (userData, userId, bookmarkId) {
       {$pull: {likes: bookmarkId}}
     );
 
-    const bookmark = await Bookmark.findOneAndUpdate({_id: bookmarkId}, {$inc: {likes: -1}});
+    const bookmark = await Bookmark.findOneAndUpdate({_id: bookmarkId}, {$inc: {likeCount: -1}});
     const bookmarkNotFound = !bookmark;
     if ( bookmarkNotFound ) {
       throw new NotFoundError('Bookmark with bookmark id ' + bookmarkId + ' not found');

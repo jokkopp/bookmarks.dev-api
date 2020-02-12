@@ -42,8 +42,11 @@ http://localhost:8480/auth/admin
 
 ### Connect to mongo
 ```
+docker exec -it bookmarks-api_mongo /bin/bash
+
 mongo -u bookmarks -p --authenticationDatabase dev-bookmarks
 use dev-bookmarks;
+
    
 db.changeUserPassword("bookmarks", "secret")
 ```

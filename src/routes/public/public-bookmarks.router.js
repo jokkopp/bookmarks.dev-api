@@ -44,7 +44,7 @@ router.get('/', async (request, response) => {
 });
 
 router.get('/tagged/:tag', async (request, response) => {
-  const orderByFilter = request.query.orderBy === 'STARS' ? {likes: -1} : {createdAt: -1};
+  const orderByFilter = request.query.orderBy === 'STARS' ? {likeCount: -1} : {createdAt: -1};
   const bookmarks = await PublicBookmarksService.getBookmarksForTag(request.params.tag, orderByFilter);
 
   return response.send(bookmarks);

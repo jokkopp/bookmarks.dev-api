@@ -95,7 +95,7 @@ let getLastCreatedBookmarks = async (userId) => {
 /* GET last created bookmarks of the user - currently there is a limit set to 100 */
 let getMostLikedBookmarks = async (userId) => {
   const bookmarks = await Bookmark.find({userId: userId})
-    .sort({likes: -1})
+    .sort({likeCount: -1})
     .limit(30);
 
   return bookmarks;
