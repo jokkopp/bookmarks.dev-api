@@ -19,7 +19,7 @@ module.exports = {
       category: req.body.category,
       tags: req.body.tags,
       publishedOn: req.body.publishedOn,
-      githubURL: req.body.githubURL,
+      sourceCodeURL: req.body.sourceCodeURL,
       userId: req.body.userId || req.params.userId,
       public: req.body.public,
       lastAccessedAt: req.body.lastAccessedAt,

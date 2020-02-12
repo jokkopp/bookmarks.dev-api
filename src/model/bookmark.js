@@ -9,7 +9,7 @@ const bookmarkSchema = new Schema({
     category: {type:String},
     tags: [String],
     publishedOn: Date,
-    githubURL: {type:String},
+    sourceCodeURL: {type:String},
     userId: {type: String, ref:'User'},
     public: Boolean,
     language: String,

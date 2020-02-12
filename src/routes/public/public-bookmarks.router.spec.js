@@ -73,7 +73,7 @@ describe('Public API Tests', function () {
             "mongodb"
           ],
           "publishedOn": "2017-11-05",
-          "githubURL": verySpecialSourceCodeUrl,
+          "sourceCodeURL": verySpecialSourceCodeUrl,
           "description": "This is a very special bookmark used for testing the search functionality. Indeed very-special-bookmark",
           "descriptionHtml": "<p>This is a very special bookmark used for testing the search functionality. Indeed very-special-bookmark</p>",
           "userId": testUserId,

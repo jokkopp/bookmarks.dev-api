@@ -53,7 +53,7 @@ describe('Personal Bookmarks tests', function () {
           "mongodb"
         ],
         "publishedOn": "2017-11-05",
-        "githubURL": "https://github.com/Codingpedia/bookmarks-api",
+        "sourceCodeURL": "https://github.com/Codingpedia/bookmarks-api",
         "description": "Example showing migration of Mongoose calls from previously using callbacks to using the new async-await feature in NodeJs",
         "descriptionHtml": "<p>Example showing migration of Mongoose calls from previously using callbacks to using the new async-await feature in NodeJs</p>",
         "userId": testUserId,
@@ -448,7 +448,7 @@ describe('Personal Bookmarks tests', function () {
           "mongodb"
         ],
         "publishedOn": "2017-11-05",
-        "githubURL": verySpecialSourceCodeUrl,
+        "sourceCodeURL": verySpecialSourceCodeUrl,
         "description": "This is a very special bookmark used for testing the search functionality. Indeed very-special-bookmark",
         "descriptionHtml": "<p>This is a very special bookmark used for testing the search functionality. Indeed very-special-bookmark</p>",
         "userId": testUserId,
