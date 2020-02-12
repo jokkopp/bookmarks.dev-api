@@ -16,7 +16,6 @@ module.exports = {
       language: req.body.language,
       description: req.body.description,
       descriptionHtml: descriptionHtml,
-      category: req.body.category,
       tags: req.body.tags,
       publishedOn: req.body.publishedOn,
       sourceCodeURL: req.body.sourceCodeURL,

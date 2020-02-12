@@ -6,7 +6,6 @@ const bookmarkSchema = new Schema({
     location: {type:String, required: true},
     description: String,
     descriptionHtml: String,
-    category: {type:String},
     tags: [String],
     publishedOn: Date,
     sourceCodeURL: {type:String},
