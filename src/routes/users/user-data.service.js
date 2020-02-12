@@ -139,7 +139,7 @@ let getWatchedTags = async function (userId) {
     throw new NotFoundError(`User data NOT_FOUND for userId: ${userId}`);
   } else {
     const bookmarks = await Bookmark.find({
-      shared: true,
+      public: true,
       tags: {$elemMatch: {$in: userData.watchedTags}}
     })
       .sort({createdAt: -1})
@@ -158,7 +158,7 @@ let getUsedTagsForPublicBookmarks = async function (userId) {
     {
       $match: {
         userId: userId,
-        shared: true,
+        public: true,
       },
     },
 
@@ -201,7 +201,7 @@ let getUsedTagsForPrivateBookmarks = async function (userId) {
     {
       $match: {
         userId: userId,
-        shared: false
+        public: false
       },
     },
 

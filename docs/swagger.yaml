@@ -22,7 +22,7 @@ paths:
           description: message with link to Swagger docs
   "/public/bookmarks":
     get:
-      description: returns all public (shared) bookmarks
+      description: returns all public bookmarks
       produces:
         - application/json
       responses:
@@ -222,7 +222,7 @@ definitions:
         type: string
       publishedOn:
         type: string
-      shared:
+      public:
         type: boolean
       tags:
         type: array

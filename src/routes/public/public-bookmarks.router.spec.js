@@ -77,7 +77,7 @@ describe('Public API Tests', function () {
           "description": "This is a very special bookmark used for testing the search functionality. Indeed very-special-bookmark",
           "descriptionHtml": "<p>This is a very special bookmark used for testing the search functionality. Indeed very-special-bookmark</p>",
           "userId": testUserId,
-          "shared": true,
+          "public": true,
           "likes": 0,
           "lastAccessedAt": null
         }

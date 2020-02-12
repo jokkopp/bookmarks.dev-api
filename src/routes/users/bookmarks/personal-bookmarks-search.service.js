@@ -26,7 +26,7 @@ let findPersonalBookmarks = async function (query, limit, userId) {
 
 let addSpecialSearchFiltersToMongoFilter = function (specialSearchFilters, filter) {
   if ( specialSearchFilters.privateOnly ) {
-    filter.shared = false;
+    filter.public = false;
   }
 
   if ( specialSearchFilters.lang ) {

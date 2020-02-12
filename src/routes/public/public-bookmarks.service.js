@@ -8,7 +8,7 @@ const MAX_NUMBER_RETURNED_RESULTS = 100;
 
 let getBookmarkByLocation = async (location) => {
   const bookmark = await Bookmark.findOne({
-    'shared': true,
+    'public': true,
     location: location
   }).lean().exec();
   if (!bookmark) {
@@ -18,7 +18,7 @@ let getBookmarkByLocation = async (location) => {
 }
 
 let getLatestBookmarks = async () => {
-  const bookmarks = await Bookmark.find({'shared': true})
+  const bookmarks = await Bookmark.find({'public': true})
     .sort({createdAt: -1})
     .limit(MAX_NUMBER_RETURNED_RESULTS)
     .lean().exec();
@@ -28,7 +28,7 @@ let getLatestBookmarks = async () => {
 
 let getBookmarksForTag = async (tag, orderByFilter) => {
   const bookmarks = await Bookmark.find({
-    shared: true,
+    public: true,
     tags: tag
   })
     .sort(orderByFilter)

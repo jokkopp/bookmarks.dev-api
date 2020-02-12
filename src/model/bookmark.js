@@ -11,7 +11,7 @@ const bookmarkSchema = new Schema({
     publishedOn: Date,
     githubURL: {type:String},
     userId: {type: String, ref:'User'},
-    shared: Boolean,
+    public: Boolean,
     language: String,
     lastAccessedAt: Date,
     likes: Number,

@@ -82,10 +82,10 @@ personalBookmarksRouter.get('/', keycloak.protect(), async (request, response) =
   return response.send(bookmarks);
 });
 
-/* GET tags used by user */
-personalBookmarksRouter.get('/tags', keycloak.protect(), async (request, response) => {
+/* GET suggested tags used by user */
+personalBookmarksRouter.get('/suggested-tags', keycloak.protect(), async (request, response) => {
   UserIdValidator.validateUserId(request);
-  const tags = await PersonalBookmarksService.getTagsForUser(request.params.userId);
+  const tags = await PersonalBookmarksService.getSuggestedTagsForUser(request.params.userId);
 
   response.send(tags);
 });

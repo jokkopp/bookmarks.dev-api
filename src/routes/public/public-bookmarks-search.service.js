@@ -41,7 +41,7 @@ let addSpecialSearchFiltersToMongoFilter = function (specialSearchFilters, filte
 
 let getPublicBookmarksForTagsAndTerms = async function (searchedTags, searchedTerms, limit, specialSearchFilters) {
   let filter = {
-    shared: true,
+    public: true,
     tags:
       {
         $all: searchedTags
@@ -78,7 +78,7 @@ let getPublicBookmarksForSearchedTerms = async function (searchedTerms, limit, s
   const termsJoined = searchedTerms.join(' ');
   const termsQuery = escapeStringRegexp(termsJoined);
   let filter = {
-    shared: true,
+    public: true,
     $text: {$search: termsQuery}
   }
 
@@ -105,7 +105,7 @@ let getPublicBookmarksForSearchedTerms = async function (searchedTerms, limit, s
 
 let getPublicBookmarksForSearchedTags = async function (searchedTags, limit, specialSearchFilters) {
   let filter = {
-    shared: true,
+    public: true,
     tags:
       {
         $all: searchedTags
@@ -126,7 +126,7 @@ let getPublicBookmarksForSearchedTags = async function (searchedTags, limit, spe
 let getPublicBookmarksForUser = async function (limit, userId) {
 
   let filter = {
-    shared: true,
+    public: true,
     userId: userId
   }
 
