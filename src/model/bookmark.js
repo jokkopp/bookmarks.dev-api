@@ -13,7 +13,7 @@ const bookmarkSchema = new Schema({
     userId: {type: String, ref:'User'},
     public: Boolean,
     language: String,
-    lastAccessedAt: Date,
+    lastAccessedAt: {type: Date, select: false},
     likeCount: Number,
     ownerVisitCount: {type:Number, select: false},
     youtubeVideoId: {type:String, required: false},
