@@ -3,7 +3,7 @@ swagger: '2.0'
 info:
   version: 1.0.0
   title: Bookmarks.dev api
-  description: API supporting the bookmarks.dev website
+  description: API supporting the www.bookmarks.dev website
   contact:
     name: Adrian Matei
     email: ama@codingpedia.org
@@ -22,12 +22,12 @@ paths:
           description: message with link to Swagger docs
   "/public/bookmarks":
     get:
-      description: returns all public bookmarks
+      description: returns latest added public bookmarks
       produces:
         - application/json
       responses:
         '200':
-          description: all public bookmarks
+          description: latest added public bookmarks
           schema:
             type: array
             items:
@@ -204,31 +204,41 @@ definitions:
     properties:
       _id:
         type: string
-      updatedAt:
+      name:
         type: string
-      createdAt:
+      location:
         type: string
+      language:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
       description:
         type: string
       descriptionHtml:
         type: string
-      language:
+      updatedAt:
+        type: string
+      createdAt:
         type: string
       lastAccessedAt:
-        type: string
-      location:
-        type: string
-      name:
         type: string
       publishedOn:
         type: string
       public:
         type: boolean
-      tags:
-        type: array
-        items:
-          type: string
       userId:
+        type: string
+      likeCount:
+        type: number
+      sourceCodeURL:
+        type: string
+      ownerVisitCount:
+        type: number
+      youtubeVideoId:
+        type: string
+      stackoverflowQuestionId:
         type: string
   myError:
     type: object
