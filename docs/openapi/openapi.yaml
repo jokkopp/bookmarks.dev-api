@@ -11,10 +11,11 @@ info:
   version: 2.0.0
 
 servers:
-  - url: https://www.bookmarks.dev/api
-    description: Main (production) server
   - url: http://localhost:3000/api
     description: Local server for development
+  - url: https://www.bookmarks.dev/api
+    description: Main (production) server
+
 
 paths:
   /:
@@ -24,9 +25,10 @@ paths:
         200:
           description: message with link to Swagger docs
           content: {}
+
   /public/bookmarks:
     get:
-      description: returns latest added public bookmarks
+      description: Returns latest added public bookmarks
       parameters:
         - name: q
           in: query
@@ -62,6 +64,37 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/bookmark'
+
+  /webpage-info/scrape:
+    get:
+      description: Returns web page info about the page scraped by `location`, `youtubeVideoId` or `stackoverflowQuestionId`
+      parameters:
+        - name: location
+          in: query
+          description: url of the page scraped for data - **this takes precedence over the other query params if present**
+          schema:
+            type: string
+        - name: youtubeVideoId
+          in: query
+          description: id of the youtube video - https://www.youtube.com/watch?v=**Emlc7mkZDQ4**
+          schema:
+            type: string
+        - name: stackoverflowQuestionId
+          in: query
+          description: id of the question from stackoverflow - https://stackoverflow.com/questions/**51391080**/handling-errors-in-express-async-middleware
+          schema:
+            type: string
+      responses:
+        200:
+          summary: OK
+          description: contains details about the web page, youtube video or stackoverflow question
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/webpageInfo'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+
   /personal/users/{userId}/bookmarks:
     get:
       description: list of user's bookmarks
@@ -137,12 +170,6 @@ paths:
       description: (full) update existing bookmark of user
       operationId: updateBookmark
       parameters:
-        - name: Authorization
-          in: header
-          description: Bearer token
-          required: true
-          schema:
-            type: string
         - name: userId
           in: path
           description: keycloak user id
@@ -287,3 +314,30 @@ components:
           type: array
           items:
             type: string
+    webPageInfo:
+      type: object
+      properties:
+        title:
+          type: string
+        metaDescription:
+          type: string
+        tags:
+          description: these are avaialble for youtube videos and stackoverflow questions
+          type: array
+          items:
+            type: string
+        publishedOn:
+          type: string
+          format: date
+  securitySchemes:
+    bearerAuth:            # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    ForbiddenError:
+      description: Access token is missing or invalid
+
+# 2) Apply the security globally to all operations
+security:
+  - bearerAuth: []         # use the same name as above

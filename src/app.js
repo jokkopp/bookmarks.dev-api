@@ -26,7 +26,7 @@ const HttpStatus = require('http-status-codes/index');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 //const swaggerDocument = YAML.load('./docs/swagger.yaml');
-const swaggerDocument = YAML.load('./docs/openapi.yaml');
+const swaggerDocument = YAML.load('./docs/openapi/openapi.yaml');
 
 const app = express();
 

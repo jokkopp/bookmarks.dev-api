@@ -1,6 +1,5 @@
 var request = require('superagent');
 var cheerio = require('cheerio');
-var Bookmark = require('../../model/bookmark');
 
 const NotFoundError = require('../../error/not-found.error');
 const HttpStatus = require('http-status-codes/index');
