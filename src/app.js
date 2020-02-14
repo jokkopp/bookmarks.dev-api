@@ -9,6 +9,7 @@ const mongoose = require('mongoose');
 const apiBasePathRouter = require('./routes');
 const versionRouter = require('./routes/version/version');
 const userRouter = require('./routes/users/user.router');
+const webPageInfoRouter = require('./routes/webpage-info/webpage-info.router');
 const adminRouter = require('./routes/admin/admin.router');
 const publicBookmarksRouter = require('./routes/public/public-bookmarks.router');
 const {MongoError} = require('mongodb');
@@ -24,7 +25,8 @@ const HttpStatus = require('http-status-codes/index');
 
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
-const swaggerDocument = YAML.load('./docs/swagger.yaml');
+//const swaggerDocument = YAML.load('./docs/swagger.yaml');
+const swaggerDocument = YAML.load('./docs/openapi.yaml');
 
 const app = express();
 
@@ -82,6 +84,7 @@ app.use('/api', apiBasePathRouter);
 app.use('/api/version', versionRouter);
 app.use('/api/public/bookmarks', publicBookmarksRouter);
 app.use('/api/personal/users', userRouter);
+app.use('/api/webpage-info', webPageInfoRouter);
 app.use('/api/admin', adminRouter);
 
 // catch 404 and forward to error handler

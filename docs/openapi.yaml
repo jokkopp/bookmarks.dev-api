@@ -1,0 +1,289 @@
+openapi: 3.0.1
+info:
+  title: Bookmarks.dev api
+  description: API supporting the www.bookmarks.dev website
+  contact:
+    name: Adrian Matei
+    url: http://www.adrianmatei.me
+    email: ama@codingpedia.org
+  license:
+    name: MIT
+  version: 2.0.0
+
+servers:
+  - url: https://www.bookmarks.dev/api
+    description: Main (production) server
+  - url: http://localhost:3000/api
+    description: Local server for development
+
+paths:
+  /:
+    get:
+      description: message with link to Swagger docs
+      responses:
+        200:
+          description: message with link to Swagger docs
+          content: {}
+  /public/bookmarks:
+    get:
+      description: returns latest added public bookmarks
+      parameters:
+        - name: q
+          in: query
+          description: |
+            search query (terms are separated by space). There are special filters available:
+              * `lang:iso_language_code` - e.g. `lang:en` for English, `lang:ees` for Spanish and `lang:de` for German bookmarks
+              * `site:site_URL` - e.g. `site:codepedia.org` bookmarks only from website [www.codepedia.org](https://www.codepedia.org)
+              * `userId:UUID-user` - public bookmarks submitted by the user with this `id`
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: max number of public bookmarks filtered  by the `q` parameter
+          schema:
+            type: string
+        - name: location
+          in: query
+          description: location of public bookmark
+          schema:
+            type: string
+      responses:
+        200:
+          summary: Returns list of public bookmarks filtered with query parameters.
+          description: |
+            * if `q` param is present they are filtered by the query text contained in it. (takes precedence over `location`)
+            * if `location` param is present returns a list with one **public** bookmark with that URL
+            * else **defaults** to the latest added 100 public bookmarks
+
+            > The list is empty if not public bookmarks returned for filter
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/bookmark'
+  /personal/users/{userId}/bookmarks:
+    get:
+      description: list of user's bookmarks
+      operationId: getUserBookmarks
+      parameters:
+        - name: Authorization
+          in: header
+          description: Bearer token
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          description: keycloak user id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: list of user's bookmarks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/bookmark'
+        401:
+          description: unauthorized (you need to have a valid token) and userId must
+            match the subject in token
+          content: {}
+    post:
+      description: create new bookmark for user
+      operationId: createBookmark
+      parameters:
+        - name: Authorization
+          in: header
+          description: Bearer token
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          description: keycloak user id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Data that replaces placeholders in the sent emails
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/bookmark'
+        required: true
+      responses:
+        201:
+          description: Empty response, status is relevant
+          headers:
+            location:
+              description: resource url of the newly created bookmark
+              schema:
+                type: object
+          content: {}
+        401:
+          description: unauthorized (you need to have a valid token) and userId must
+            match the subject in token
+          content: {}
+        409:
+          description: conflict
+          content: {}
+      x-codegen-request-body-name: body
+  /personal/users/{userId}/bookmarks/{bookmarkId}:
+    put:
+      description: (full) update existing bookmark of user
+      operationId: updateBookmark
+      parameters:
+        - name: Authorization
+          in: header
+          description: Bearer token
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          description: keycloak user id
+          required: true
+          schema:
+            type: string
+        - name: bookmarkId
+          in: path
+          description: id of the bookmark
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Complete bookmark to be updated
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/bookmark'
+        required: true
+      responses:
+        200:
+          description: OK when operation successful and updated bookmark in body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bookmark'
+        401:
+          description: unauthorized (you need to have a valid token) and userId must
+            match the subject in token
+          content: {}
+        404:
+          description: NOT_FOUND when bookmark cannot be found for user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/myError'
+        500:
+          description: internal server error, when unknown server error is catched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/myError'
+      x-codegen-request-body-name: body
+    delete:
+      description: deletes bookmark of user
+      operationId: updateBookmark
+      parameters:
+        - name: Authorization
+          in: header
+          description: Bearer token
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          description: keycloak user id
+          required: true
+          schema:
+            type: string
+        - name: bookmarkId
+          in: path
+          description: id of the bookmark
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: OK (No content) when operation successful and bookmark was
+            removed
+          content: {}
+        401:
+          description: unauthorized (you need to have a valid token) and userId must
+            match the subject in token
+          content: {}
+        404:
+          description: NOT_FOUND when bookmark cannot be found for user
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/myError'
+        500:
+          description: internal server error, when unknown server error is catched
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/myError'
+components:
+  schemas:
+    bookmark:
+      required:
+        - language
+        - location
+        - name
+        - tags
+        - userId
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        location:
+          type: string
+        language:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        descriptionHtml:
+          type: string
+        updatedAt:
+          type: string
+        createdAt:
+          type: string
+        lastAccessedAt:
+          type: string
+        publishedOn:
+          type: string
+        public:
+          type: boolean
+        userId:
+          type: string
+        likeCount:
+          type: number
+        sourceCodeURL:
+          type: string
+        ownerVisitCount:
+          type: number
+        youtubeVideoId:
+          type: string
+        stackoverflowQuestionId:
+          type: string
+    myError:
+      type: object
+      properties:
+        title:
+          type: string
+        messages:
+          type: array
+          items:
+            type: string

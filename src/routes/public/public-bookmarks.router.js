@@ -62,36 +62,6 @@ router.get('/scrape', async function (request, response, next) {
   }
 });
 
-/* GET youtube video data */
-router.get('/scrape', async function (request, response, next) {
-  const youtubeVideoId = request.query.youtubeVideoId;
-  if (youtubeVideoId) {
-    const webpageData = await PublicBookmarksService.getYoutubeVideoData(youtubeVideoId)
-
-    return response.send(webpageData);
-  } else {
-    next();
-  }
-});
-
-/* GET stackoverflow question data */
-router.get('/scrape', async function (request, response, next) {
-  const stackoverflowQuestionId = request.query.stackoverflowQuestionId;
-  if (stackoverflowQuestionId) {
-    const webpageData = await PublicBookmarksService.getStackoverflowQuestionData(stackoverflowQuestionId)
-
-    return response.send(webpageData);
-  } else {
-    next();
-  }
-});
-
-/* GET title of bookmark given its url */
-router.get('/scrape', async function () {
-  throw new ValidationError('Missing parameters - url or youtubeVideoId',
-    ['You need to provide the url to scrape for or the youtubeVideoId']);
-});
-
 /**
  *  GET bookmark by id.
  *  This needs to be the last call to avoid to "tagged" and "scrape" endpoints, which throw then errors
