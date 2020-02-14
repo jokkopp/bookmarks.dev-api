@@ -30,25 +30,9 @@ paths:
     get:
       description: Returns latest added public bookmarks
       parameters:
-        - name: q
-          in: query
-          description: |
-            search query (terms are separated by space). There are special filters available:
-              * `lang:iso_language_code` - e.g. `lang:en` for English, `lang:ees` for Spanish and `lang:de` for German bookmarks
-              * `site:site_URL` - e.g. `site:codepedia.org` bookmarks only from website [www.codepedia.org](https://www.codepedia.org)
-              * `userId:UUID-user` - public bookmarks submitted by the user with this `id`
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: max number of public bookmarks filtered  by the `q` parameter
-          schema:
-            type: string
-        - name: location
-          in: query
-          description: location of public bookmark
-          schema:
-            type: string
+        - $ref: "#/components/parameters/searchQueryParam"
+        - $ref: "#/components/parameters/limitParam"
+        - $ref: "#/components/parameters/locationParam"
       responses:
         200:
           summary: Returns list of public bookmarks filtered with query parameters.
@@ -63,7 +47,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/bookmark'
+                  $ref: '#/components/schemas/Bookmark'
 
   /webpage-info/scrape:
     get:
@@ -91,25 +75,34 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/webpageInfo'
+                $ref: '#/components/schemas/WebpageInfo'
         403:
           $ref: '#/components/responses/ForbiddenError'
 
   /personal/users/{userId}/bookmarks:
     get:
-      description: list of user's bookmarks
-      operationId: getUserBookmarks
+      description: |
+        Returns list of user's bookmarks - might be filtered by query text (`q` with `limit`) > `location` > `orderBy parameters;
+        The parameters precedence is shown via **>**
+      operationId: getPersonalBookmarks
       parameters:
-        - name: Authorization
-          in: header
-          description: Bearer token
-          required: true
-          schema:
-            type: string
         - name: userId
           in: path
           description: keycloak user id
           required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/searchQueryParam"
+        - $ref: "#/components/parameters/limitParam"
+        - $ref: "#/components/parameters/locationParam"
+        - name: orderBy
+          in: query
+          description: |
+            Counts when no `q` or `location` parameters are given,
+            Possible values:
+              * MOST_LIKES - personal bookmarks most liked by the community
+              * LAST_CREATED - personal bookmarks last added
+              * MOST_USED - personal bookmarks the user used the most
           schema:
             type: string
       responses:
@@ -120,7 +113,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/bookmark'
+                  $ref: '#/components/schemas/Bookmark'
         401:
           description: unauthorized (you need to have a valid token) and userId must
             match the subject in token
@@ -146,7 +139,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/bookmark'
+              $ref: '#/components/schemas/Bookmark'
         required: true
       responses:
         201:
@@ -187,7 +180,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/bookmark'
+              $ref: '#/components/schemas/Bookmark'
         required: true
       responses:
         200:
@@ -195,7 +188,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/bookmark'
+                $ref: '#/components/schemas/Bookmark'
         401:
           description: unauthorized (you need to have a valid token) and userId must
             match the subject in token
@@ -314,7 +307,7 @@ components:
           type: array
           items:
             type: string
-    webPageInfo:
+    WebpageInfo:
       type: object
       properties:
         title:
@@ -329,6 +322,34 @@ components:
         publishedOn:
           type: string
           format: date
+  parameters:
+    searchQueryParam:
+      name: q
+      in: query
+      description: |
+        search query (terms are separated by space). There are special filters available:
+          * `lang:iso_language_code` - e.g. `lang:en` for English, `lang:es` for Spanish and `lang:de` for German bookmarks
+          * `site:site_URL` - e.g. `site:codepedia.org` bookmarks only from website [www.codepedia.org](https://www.codepedia.org)
+          * `userId:UUID-user` - to be used only when querying **public bookmarks** submitted by the user with  `userId`
+          * `private:only` - makes sense **only** when used for querying **personal bookmarks**
+      schema:
+        type: string
+    limitParam:
+      name: limit
+      in: query
+      description: Limits the number of returned results (used in combination with queryParam)
+      required: false
+      schema:
+        type: integer
+        default: 10
+        format: int32
+    locationParam:
+      name: location
+      in: query
+      description: location of the bookmark, usually an URL
+      required: false
+      schema:
+        type: string
   securitySchemes:
     bearerAuth:            # arbitrary name for the security scheme
       type: http
