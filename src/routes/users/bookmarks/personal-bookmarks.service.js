@@ -68,9 +68,9 @@ let getBookmarkByLocation = async (userId, location) => {
   }).lean().exec();
 
   if (!bookmark) {
-    throw new NotFoundError(`Bookmark NOT_FOUND the userId: ${userId} AND location: ${location}`);
+    return [];
   } else {
-    return bookmark;
+    return [bookmark];
   }
 };
 
