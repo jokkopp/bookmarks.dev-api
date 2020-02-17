@@ -105,3 +105,11 @@ db.bookmarks.createIndex(
     language_override: "none"
   }
 );
+
+db.bookmarks.createIndex(
+  { location: 1, userId:1 },
+  {
+    unique: true,
+    name:"unique_user_and_location"
+  }
+);
