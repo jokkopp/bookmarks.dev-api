@@ -27,20 +27,20 @@ paths:
 
   /public/bookmarks:
     get:
-      description: Returns latest added public bookmarks
+      summary: Returns list of public bookmarks filtered with query parameters.
+      description: |
+        * if `q` param is present they are filtered by the query text contained in it. (takes precedence over `location`)
+        * if `location` param is present returns a list with one **public** bookmark with that URL
+        * else **defaults** to the latest added 100 public bookmarks
+
+        > The list is empty if not public bookmarks returned for filter
       parameters:
         - $ref: "#/components/parameters/searchQueryParam"
         - $ref: "#/components/parameters/limitParam"
         - $ref: "#/components/parameters/locationParam"
       responses:
         200:
-          summary: Returns list of public bookmarks filtered with query parameters.
-          description: |
-            * if `q` param is present they are filtered by the query text contained in it. (takes precedence over `location`)
-            * if `location` param is present returns a list with one **public** bookmark with that URL
-            * else **defaults** to the latest added 100 public bookmarks
-
-            > The list is empty if not public bookmarks returned for filter
+          description: OK
           content:
             application/json:
               schema:
@@ -69,7 +69,6 @@ paths:
             type: string
       responses:
         200:
-          summary: OK
           description: contains details about the web page, youtube video or stackoverflow question
           content:
             application/json:
@@ -127,6 +126,7 @@ paths:
           required: true
           schema:
             type: string
+            default: 4c617f2b-2bad-498b-a9c6-4e9a8c303798
       requestBody:
         description: Bookmark json data
         content:
@@ -166,7 +166,7 @@ paths:
               stackoverflowQuestionId: 105034
           youtube-video:
             value:
-              name: Jake Archibald: In The Loop - JSConf.Asia - 35min
+              name: Jake Archibald In The Loop - JSConf.Asia - 35min
               location: https://www.youtube.com/watch?v=cCOL7MC4Pl0
               language: en
               tags: [javascript, event-loop, browser]
@@ -192,10 +192,24 @@ paths:
         401:
           description: unauthorized (you need to have a valid token) and userId must
             match the subject in token
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicErrorModel'
+        400:
+          description: bad request, validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
         409:
-          description: conflict
-          content: {}
+          description: |
+            Conflict. It can be triggered either when trying to create a public bookmark that is already present
+            or a bookmark with the location is already present for the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasicErrorModel'
       x-codegen-request-body-name: body
   /personal/users/{userId}/bookmarks/{bookmarkId}:
     put:
@@ -237,17 +251,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/myError'
+                $ref: '#/components/schemas/BasicErrorModel'
         500:
           description: internal server error, when unknown server error is catched
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/myError'
+                $ref: '#/components/schemas/BasicErrorModel'
       x-codegen-request-body-name: body
     delete:
       description: deletes bookmark of user
-      operationId: updateBookmark
+      operationId: delete-bookmark
       parameters:
         - name: Authorization
           in: header
@@ -281,13 +295,13 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/myError'
+                $ref: '#/components/schemas/BasicErrorModel'
         500:
           description: internal server error, when unknown server error is catched
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/myError'
+                $ref: '#/components/schemas/BasicErrorModel'
 components:
   schemas:
     Bookmark:
@@ -342,15 +356,36 @@ components:
         stackoverflowQuestionId:
           type: string
 
-    myError:
+    BasicErrorModel:
       type: object
+      required:
+        - httpStatus
+        - message
       properties:
-        title:
+        httpStatus:
           type: string
-        messages:
-          type: array
-          items:
-            type: string
+        message:
+          type: string
+        type:
+          type: string
+          description: specify error Type (e.g. 'MongoError')
+        stack:
+          type: string
+          description: the stacktrace of the error - it is filled only in "development" mode
+
+    ValidationError:
+      allOf:
+        - $ref: '#/components/schemas/BasicErrorModel'
+        - type: object
+          required:
+            - validationErrors
+          properties:
+            validationErrors:
+              type: array
+              items:
+                type: string
+
+
     WebpageInfo:
       type: object
       properties:
