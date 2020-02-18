@@ -35,9 +35,9 @@ paths:
 
         > The list is empty if not public bookmarks returned for filter
       parameters:
-        - $ref: "#/components/parameters/searchQueryParam"
-        - $ref: "#/components/parameters/limitParam"
-        - $ref: "#/components/parameters/locationParam"
+        - $ref: "#/components/parameters/searchTextQueryParam"
+        - $ref: "#/components/parameters/limitQueryParam"
+        - $ref: "#/components/parameters/locationQueryParam"
       responses:
         200:
           description: OK
@@ -77,12 +77,12 @@ paths:
       description: |
         Returns list of user's bookmarks - might be filtered by query text (`q` with `limit`) > `location` > `orderBy parameters;
         The parameters precedence is shown via **>**
-      operationId: getPersonalBookmarks
+      operationId: get-personal-bookmarks
       parameters:
         - $ref: "#/components/parameters/userIdPathParam"
-        - $ref: "#/components/parameters/searchQueryParam"
-        - $ref: "#/components/parameters/limitParam"
-        - $ref: "#/components/parameters/locationParam"
+        - $ref: "#/components/parameters/searchTextQueryParam"
+        - $ref: "#/components/parameters/limitQueryParam"
+        - $ref: "#/components/parameters/locationQueryParam"
         - name: orderBy
           in: query
           description: |
@@ -182,6 +182,34 @@ paths:
       x-codegen-request-body-name: body
 
     delete:
+      description: Batch delete personal bookmarks, given query parameters
+      operationId: delete-personal-bookmarks
+      parameters:
+        - $ref: '#/components/parameters/userIdPathParam'
+        - $ref: '#/components/parameters/locationQueryParam'
+        - in: query
+          name: tag
+          description: Private bookmarks with this tag will be batch deleted. It is considered in combination with the `type` param which needs to have the value `private`
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - private
+      responses:
+        204:
+          description: OK (No content) when bookmarks have been deleted
+          content: {}
+        400:
+          $ref: '#/components/responses/ValidationError'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+        500:
+          $ref: '#/components/responses/InternalServerError'
 
   /personal/users/{userId}/bookmarks/{bookmarkId}:
     put:
@@ -353,7 +381,7 @@ components:
       required: true
       schema:
         type: string
-    searchQueryParam:
+    searchTextQueryParam:
       name: q
       in: query
       description: |
@@ -377,7 +405,7 @@ components:
         complex-private-only:
           value: 'exception handling [java] site:wiki.my-corporation.com private:only'
           summary: Same as above but only within **private** bookmarks
-    limitParam:
+    limitQueryParam:
       name: limit
       in: query
       description: Limits the number of returned results (used in combination with queryParam)
@@ -386,7 +414,7 @@ components:
         type: integer
         default: 10
         format: int32
-    locationParam:
+    locationQueryParam:
       name: location
       in: query
       description: location of the bookmark, usually an URL
