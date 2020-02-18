@@ -86,13 +86,14 @@ paths:
         - name: orderBy
           in: query
           description: |
-            Counts when no `q` or `location` parameters are given,
+            It is considered in the abscence of `q` or `location` parameters
             Possible values:
               * MOST_LIKES - personal bookmarks most liked by the community
               * LAST_CREATED - personal bookmarks last added
-              * MOST_USED - personal bookmarks the user used the most
+              * MOST_USED - personal bookmarks the user (owner) clicked the most
           schema:
             type: string
+            enum: [MOST_LIKES, LAST_CREATED, MOST_USED]
       responses:
         200:
           description: list of user's bookmarks
@@ -179,6 +180,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/BasicErrorModel'
       x-codegen-request-body-name: body
+
+    delete:
+
   /personal/users/{userId}/bookmarks/{bookmarkId}:
     put:
       description: (full) update existing bookmark of user
@@ -230,6 +234,8 @@ paths:
           $ref: '#/components/responses/NotFoundError'
         500:
           $ref: '#/components/responses/InternalServerError'
+
+
 components:
   schemas:
     Bookmark:
