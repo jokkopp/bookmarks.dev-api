@@ -100,6 +100,9 @@ paths:
           $ref: '#/components/responses/BookmarkListResponse'
         401:
           $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+
     post:
       description: Create new bookmark for user
       operationId: create-bookmark
@@ -169,6 +172,8 @@ paths:
           content: {}
         401:
           $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
         400:
           $ref: '#/components/responses/ValidationError'
         409:
@@ -206,10 +211,34 @@ paths:
           $ref: '#/components/responses/ValidationError'
         401:
           $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
         404:
           $ref: '#/components/responses/NotFoundError'
         500:
           $ref: '#/components/responses/InternalServerError'
+
+  /personal/users/{userId}/bookmarks/suggested-tags:
+    get:
+      description: Returns suggested tags for autocompletion for the user
+      operationId: get-suggested-tags-for-user
+      parameters:
+        - $ref: '#/components/parameters/userIdPathParam'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      type: string
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
 
   /personal/users/{userId}/bookmarks/{bookmarkId}:
     put:
@@ -232,10 +261,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Bookmark'
-        401:
-          $ref: '#/components/responses/UnauthorizedError'
+
         400:
           $ref: '#/components/responses/ValidationError'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
         404:
           $ref: '#/components/responses/NotFoundError'
         500:
@@ -258,6 +290,8 @@ paths:
           content: {}
         401:
           $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
         404:
           $ref: '#/components/responses/NotFoundError'
         500:
