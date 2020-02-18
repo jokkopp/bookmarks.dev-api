@@ -176,7 +176,7 @@ personalBookmarksRouter.delete('/', keycloak.protect(), async (request, response
 
 personalBookmarksRouter.delete('/', keycloak.protect(), async () => {
   throw new ValidationError('Missing parameters',
-    ['You need to provide bookmark id or location to delete personal bookmarks']);
+    ['You need to provide location or tag to delete personal bookmarks']);
 });
 
 module.exports = personalBookmarksRouter;
