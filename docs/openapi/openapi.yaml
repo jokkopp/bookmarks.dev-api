@@ -113,9 +113,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Bookmark'
         401:
-          description: unauthorized (you need to have a valid token) and userId must
-            match the subject in token
-          content: {}
+          $ref: '#/components/responses/UnauthorizedError'
     post:
       description: Create new bookmark for user
       operationId: create-bookmark
@@ -129,56 +127,56 @@ paths:
             default: 4c617f2b-2bad-498b-a9c6-4e9a8c303798
       requestBody:
         description: Bookmark json data
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Bookmark'
-        required: true
-        examples:
-          blog-article:
-            value:
-              name: Cleaner code in an Express REST API with unified error handling – CodepediaOrg
-              location: https://www.codepedia.org/ama/cleaner-code-in-expressjs-rest-api-with-custom-error-handling
-              language: en
-              tags: [nodejs, error-handling, expressjs]
-              publishedOn: 2019-12-02,
-              sourceCodeURL: https://github.com/CodepediaOrg/bookmarks.dev-api
-              description: Shows how you can make your backend ExpressJS REST API cleaner by using custom error handling middleware. Code snippets of before and after refactoring are presented to make the point
-              descriptionHtml: <p>Shows how you can make your backend ExpressJS REST API cleaner by using custom error handling middleware. Code snippets of before and after refactoring are presented to make the point</p>
-              userId: 4c617f2b-2bad-498b-a9c6-4e9a8c303798
-              public: true,
-              lastAccessedAt: 2020-02-15T20:42:19.297Z
-              likeCount: 0
-          stackoverflow-question:
-            value:
-              name: Create GUID / UUID in JavaScript?
-              location: https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
-              language: en
-              tags: [javascript, guid, uuid]
-              publishedOn: 2008-09-19
-              sourceCodeURL:
-              description: UUIDs (Universally Unique IDentifier), also known as GUIDs (Globally Unique IDentifier), according to [RFC 4122](https://www.ietf.org/rfc/rfc4122.txt), are identifiers with a certain uniqueness guarantee.\n\nThe best way to generate them, is to follow implementation instructions in the said RFC, use one of the many community vetted open source implementations.\n\nA popular Open Source tool for working with UUIDs in JavaScript is [node-uuid](https://github.com/kelektiv/node-uuid)\n\nNote that just randomly generating the identifiers byte by byte, or character by character, will not give you the same guarantees as a conforming implementation. Also, very important, systems working with compliant UUIDs may choose not to accept randomly generated ones, and many open source validators will actually check for a valid structure.\n\nAn UUID must have this format:\n```\nxxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx\n```\nWhere the M and N positions may only have certain values. At this time, the only valid values for M are 1, 2, 3, 4 and 5, so randomly generating that position would make most results unacceptable.
-              descriptionHtml: <p>UUIDs (Universally Unique IDentifier), also known as GUIDs (Globally Unique IDentifier), according to <a href=\"https://www.ietf.org/rfc/rfc4122.txt\">RFC 4122</a>, are identifiers with a certain uniqueness guarantee.</p>\n<p>The best way to generate them, is to follow implementation instructions in the said RFC, use one of the many community vetted open source implementations.</p>\n<p>A popular Open Source tool for working with UUIDs in JavaScript is <a href=\"https://github.com/kelektiv/node-uuid\">node-uuid</a></p>\n<p>Note that just randomly generating the identifiers byte by byte, or character by character, will not give you the same guarantees as a conforming implementation. Also, very important, systems working with compliant UUIDs may choose not to accept randomly generated ones, and many open source validators will actually check for a valid structure.</p>\n<p>An UUID must have this format:</p>\n<pre><code>xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx\n</code></pre>\n<p>Where the M and N positions may only have certain values. At this time, the only valid values for M are 1, 2, 3, 4 and 5, so randomly generating that position would make most results unacceptable.</p>
-              userId: 4c617f2b-2bad-498b-a9c6-4e9a8c303798
-              public: true
-              lastAccessedAt: 2020-02-15T20:59:45.447Z
-              likeCount: 0
-              stackoverflowQuestionId: 105034
-          youtube-video:
-            value:
-              name: Jake Archibald In The Loop - JSConf.Asia - 35min
-              location: https://www.youtube.com/watch?v=cCOL7MC4Pl0
-              language: en
-              tags: [javascript, event-loop, browser]
-              publishedOn: 2018-02-09
-              sourceCodeURL:
-              description: Have you ever had a bug where things were happening in the wrong order, or particular style changes were being ignored? Ever fixed that bug by wrapping a section of code in a setTimeout? Ever found that fix to be unreliable, and played around with the timeout number until it kinda almost always worked? \nThis talk looks at the browser's event loop, the thing that orchestrates the main thread of the browser, which includes JavaScript, events, and rendering. We'll look at the difference between tasks, microtasks, requestAnimationFrame, requestIdleCallback, and where events land. \nHopefully you'll never have to use setTimeout hacks again!\"
-              descriptionHtml: <p>Have you ever had a bug where things were happening in the wrong order, or particular style changes were being ignored? Ever fixed that bug by wrapping a section of code in a setTimeout? Ever found that fix to be unreliable, and played around with the timeout number until it kinda almost always worked? \nThis talk looks at the browser's event loop, the thing that orchestrates the main thread of the browser, which includes JavaScript, events, and rendering. We'll look at the difference between tasks, microtasks, requestAnimationFrame, requestIdleCallback, and where events land. \nHopefully you'll never have to use setTimeout hacks again!\"</p>
-              userId: 4c617f2b-2bad-498b-a9c6-4e9a8c303798
-              public: true
-              lastAccessedAt: 2020-02-15T21:12:12.670Z
-              likeCount: 0
-              youtubeVideoId: cCOL7MC4Pl0
+            examples:
+              blog-article:
+                value:
+                  name: Cleaner code in an Express REST API with unified error handling – CodepediaOrg
+                  location: https://www.codepedia.org/ama/cleaner-code-in-expressjs-rest-api-with-custom-error-handling
+                  language: en
+                  tags: [nodejs, error-handling, expressjs]
+                  publishedOn: 2019-12-02,
+                  sourceCodeURL: https://github.com/CodepediaOrg/bookmarks.dev-api
+                  description: Shows how you can make your backend ExpressJS REST API cleaner by using custom error handling middleware. Code snippets of before and after refactoring are presented to make the point
+                  descriptionHtml: <p>Shows how you can make your backend ExpressJS REST API cleaner by using custom error handling middleware. Code snippets of before and after refactoring are presented to make the point</p>
+                  userId: 4c617f2b-2bad-498b-a9c6-4e9a8c303798
+                  public: true,
+                  lastAccessedAt: 2020-02-15T20:42:19.297Z
+                  likeCount: 0
+              stackoverflow-question:
+                value:
+                  name: Create GUID / UUID in JavaScript?
+                  location: https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
+                  language: en
+                  tags: [javascript, guid, uuid]
+                  publishedOn: 2008-09-19
+                  sourceCodeURL:
+                  description: UUIDs (Universally Unique IDentifier), also known as GUIDs (Globally Unique IDentifier), according to [RFC 4122](https://www.ietf.org/rfc/rfc4122.txt), are identifiers with a certain uniqueness guarantee.\n\nThe best way to generate them, is to follow implementation instructions in the said RFC, use one of the many community vetted open source implementations.\n\nA popular Open Source tool for working with UUIDs in JavaScript is [node-uuid](https://github.com/kelektiv/node-uuid)\n\nNote that just randomly generating the identifiers byte by byte, or character by character, will not give you the same guarantees as a conforming implementation. Also, very important, systems working with compliant UUIDs may choose not to accept randomly generated ones, and many open source validators will actually check for a valid structure.\n\nAn UUID must have this format:\n```\nxxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx\n```\nWhere the M and N positions may only have certain values. At this time, the only valid values for M are 1, 2, 3, 4 and 5, so randomly generating that position would make most results unacceptable.
+                  descriptionHtml: <p>UUIDs (Universally Unique IDentifier), also known as GUIDs (Globally Unique IDentifier), according to <a href=\"https://www.ietf.org/rfc/rfc4122.txt\">RFC 4122</a>, are identifiers with a certain uniqueness guarantee.</p>\n<p>The best way to generate them, is to follow implementation instructions in the said RFC, use one of the many community vetted open source implementations.</p>\n<p>A popular Open Source tool for working with UUIDs in JavaScript is <a href=\"https://github.com/kelektiv/node-uuid\">node-uuid</a></p>\n<p>Note that just randomly generating the identifiers byte by byte, or character by character, will not give you the same guarantees as a conforming implementation. Also, very important, systems working with compliant UUIDs may choose not to accept randomly generated ones, and many open source validators will actually check for a valid structure.</p>\n<p>An UUID must have this format:</p>\n<pre><code>xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx\n</code></pre>\n<p>Where the M and N positions may only have certain values. At this time, the only valid values for M are 1, 2, 3, 4 and 5, so randomly generating that position would make most results unacceptable.</p>
+                  userId: 4c617f2b-2bad-498b-a9c6-4e9a8c303798
+                  public: true
+                  lastAccessedAt: 2020-02-15T20:59:45.447Z
+                  likeCount: 0
+                  stackoverflowQuestionId: 105034
+              youtube-video:
+                value:
+                  name: Jake Archibald In The Loop - JSConf.Asia - 35min
+                  location: https://www.youtube.com/watch?v=cCOL7MC4Pl0
+                  language: en
+                  tags: [javascript, event-loop, browser]
+                  publishedOn: 2018-02-09
+                  sourceCodeURL:
+                  description: Have you ever had a bug where things were happening in the wrong order, or particular style changes were being ignored? Ever fixed that bug by wrapping a section of code in a setTimeout? Ever found that fix to be unreliable, and played around with the timeout number until it kinda almost always worked? \nThis talk looks at the browser's event loop, the thing that orchestrates the main thread of the browser, which includes JavaScript, events, and rendering. We'll look at the difference between tasks, microtasks, requestAnimationFrame, requestIdleCallback, and where events land. \nHopefully you'll never have to use setTimeout hacks again!\"
+                  descriptionHtml: <p>Have you ever had a bug where things were happening in the wrong order, or particular style changes were being ignored? Ever fixed that bug by wrapping a section of code in a setTimeout? Ever found that fix to be unreliable, and played around with the timeout number until it kinda almost always worked? \nThis talk looks at the browser's event loop, the thing that orchestrates the main thread of the browser, which includes JavaScript, events, and rendering. We'll look at the difference between tasks, microtasks, requestAnimationFrame, requestIdleCallback, and where events land. \nHopefully you'll never have to use setTimeout hacks again!\"</p>
+                  userId: 4c617f2b-2bad-498b-a9c6-4e9a8c303798
+                  public: true
+                  lastAccessedAt: 2020-02-15T21:12:12.670Z
+                  likeCount: 0
+                  youtubeVideoId: cCOL7MC4Pl0
 
       responses:
         201:
@@ -190,18 +188,9 @@ paths:
                 type: object
           content: {}
         401:
-          description: unauthorized (you need to have a valid token) and userId must
-            match the subject in token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BasicErrorModel'
+          $ref: '#/components/responses/UnauthorizedError'
         400:
-          description: bad request, validation errors
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationError'
+          $ref: '#/components/responses/ValidationError'
         409:
           description: |
             Conflict. It can be triggered either when trying to create a public bookmark that is already present
@@ -214,7 +203,7 @@ paths:
   /personal/users/{userId}/bookmarks/{bookmarkId}:
     put:
       description: (full) update existing bookmark of user
-      operationId: updateBookmark
+      operationId: update-bookmark
       parameters:
         - name: userId
           in: path
@@ -243,9 +232,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Bookmark'
         401:
-          description: unauthorized (you need to have a valid token) and userId must
-            match the subject in token
-          content: {}
+          $ref: '#/components/responses/UnauthorizedError'
+        400:
+          $ref: '#/components/responses/ValidationError'
         404:
           description: NOT_FOUND when bookmark cannot be found for user
           content:
@@ -263,12 +252,6 @@ paths:
       description: deletes bookmark of user
       operationId: delete-bookmark
       parameters:
-        - name: Authorization
-          in: header
-          description: Bearer token
-          required: true
-          schema:
-            type: string
         - name: userId
           in: path
           description: keycloak user id
@@ -287,21 +270,11 @@ paths:
             removed
           content: {}
         401:
-          description: unauthorized (you need to have a valid token) and userId must
-            match the subject in token
-          content: {}
+          $ref: '#/components/responses/UnauthorizedError'
         404:
-          description: NOT_FOUND when bookmark cannot be found for user
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/BasicErrorModel'
+          $ref: '#/components/responses/NotFoundError'
         500:
-          description: internal server error, when unknown server error is catched
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/BasicErrorModel'
+          $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
     Bookmark:
@@ -363,7 +336,7 @@ components:
         - message
       properties:
         httpStatus:
-          type: string
+          type: integer
         message:
           type: string
         type:
@@ -373,13 +346,17 @@ components:
           type: string
           description: the stacktrace of the error - it is filled only in "development" mode
 
-    ValidationError:
+    ValidationErrorModel:
       allOf:
         - $ref: '#/components/schemas/BasicErrorModel'
         - type: object
           required:
             - validationErrors
+            - httpStatus
           properties:
+            httpStatus:
+              type: integer
+              enum: [400]
             validationErrors:
               type: array
               items:
@@ -450,6 +427,31 @@ components:
   responses:
     ForbiddenError:
       description: Access token is missing or invalid
+    UnauthorizedError:
+      description: unauthorized (you need to have a valid token) and userId must
+        match the subject in token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BasicErrorModel'
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BasicErrorModel'
+    InternalServerError:
+      description: Internal server error, when unknown server error is catched
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BasicErrorModel'
+    ValidationError:
+      description: Bad request, validation errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorModel'
 
 # 2) Apply the security globally to all operations
 security:
